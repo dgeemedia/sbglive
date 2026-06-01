@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { sanityWriteClient } from '../../../../sanity/lib/client'
-import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<Response> {
   const rawBody = await req.text()
   const signature = req.headers.get('x-paystack-signature')
 
@@ -26,7 +23,7 @@ export async function POST(req: NextRequest) {
 
     try {
       // Save order to Sanity
-      const order = await sanityWriteClient.create({
+      await sanityWriteClient.create({
         _type: 'order',
         reference,
         email: customer.email,
@@ -42,10 +39,12 @@ export async function POST(req: NextRequest) {
         createdAt: new Date().toISOString(),
       })
 
-      // Send confirmation email
-      if (customer.email) {
+      // Send email lazily — only import Resend at runtime
+      if (customer.email && process.env.RESEND_API_KEY) {
+        const { Resend } = await import('resend')
+        const resend = new Resend(process.env.RESEND_API_KEY)
         await resend.emails.send({
-          from: process.env.EMAIL_FROM || 'orders@sbglive.live',
+          from: process.env.EMAIL_FROM || 'orders@sbglive.com',
           to: customer.email,
           subject: `Order Confirmed – ${reference}`,
           html: buildOrderEmail({
@@ -57,10 +56,10 @@ export async function POST(req: NextRequest) {
         })
       }
 
-      return NextResponse.json({ received: true, orderId: order._id })
-    } catch (err) {
-      console.error('Webhook processing error:', err)
-      return NextResponse.json({ error: 'Failed to process order' }, { status: 500 })
+      return NextResponse.json({ received: true })
+    } catch (err: any) {
+      console.error('Webhook error:', err)
+      return NextResponse.json({ error: err.message }, { status: 500 })
     }
   }
 
@@ -68,7 +67,10 @@ export async function POST(req: NextRequest) {
 }
 
 function buildOrderEmail({ name, reference, items, total }: {
-  name: string; reference: string; items: any[]; total: number
+  name: string
+  reference: string
+  items: any[]
+  total: number
 }) {
   const itemRows = items.map((item: any) =>
     `<tr>
@@ -79,15 +81,14 @@ function buildOrderEmail({ name, reference, items, total }: {
     </tr>`
   ).join('')
 
-  return `
-  <!DOCTYPE html>
+  return `<!DOCTYPE html>
   <html>
   <body style="background:#0a0a0a;color:#e8e8e8;font-family:sans-serif;margin:0;padding:20px">
     <div style="max-width:560px;margin:0 auto;background:#111;border:1px solid #2a2a2a;padding:32px">
-      <h1 style="font-family:Georgia,serif;font-size:28px;letter-spacing:4px;color:#ff2d2d;margin:0 0 4px">sbglive</h1>
+      <h1 style="font-size:28px;letter-spacing:4px;color:#ff2d2d;margin:0 0 4px">SBGLIVE</h1>
       <p style="color:#888;font-size:11px;letter-spacing:3px;margin:0 0 24px">ORDER CONFIRMED</p>
       <p style="color:#e8e8e8;margin-bottom:8px">Hey ${name},</p>
-      <p style="color:#888;font-size:14px;line-height:1.6;margin-bottom:24px">Your order has been confirmed and payment received. We'll get it out to you ASAP.</p>
+      <p style="color:#888;font-size:14px;line-height:1.6;margin-bottom:24px">Your order is confirmed and payment received. We will get it out to you ASAP.</p>
       <p style="font-size:12px;color:#555;letter-spacing:2px;margin-bottom:8px">REF: <span style="color:#c8a96e">${reference}</span></p>
       <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
         <thead>
