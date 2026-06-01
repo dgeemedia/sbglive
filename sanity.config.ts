@@ -1,18 +1,17 @@
 import { defineConfig } from 'sanity'
 import { structureTool } from 'sanity/structure'
-import { visionTool } from '@sanity/vision'
 import { schemaTypes } from './sanity/schemas'
 
 export default defineConfig({
   name: 'sbglive-studio',
-  title: 'sbglive Admin',
+  title: 'SBGLive Admin',
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || 'production',
   plugins: [
     structureTool({
       structure: (S) =>
         S.list()
-          .title('sbglive CMS')
+          .title('SBGLive CMS')
           .items([
             S.listItem().title('Products').schemaType('product').child(
               S.documentList().title('Products').filter('_type == "product"').defaultOrdering([{ field: 'order', direction: 'asc' }])
@@ -29,7 +28,6 @@ export default defineConfig({
             ),
           ])
     }),
-    visionTool(),
   ],
   schema: { types: schemaTypes },
 })
