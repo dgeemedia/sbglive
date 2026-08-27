@@ -1,3 +1,4 @@
+// src/components/shop/ProductGrid.tsx
 'use client'
 import { useState } from 'react'
 import type { Product } from '@/types'

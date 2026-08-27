@@ -1,3 +1,4 @@
+// sanity/schemas/index.ts
 import product from './product'
 import order from './order'
 

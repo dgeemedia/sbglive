@@ -1,3 +1,4 @@
+// src/lib/queries.ts
 import { sanityClient } from '../../sanity/lib/client'
 import type { Product } from '@/types'
 

@@ -1,3 +1,4 @@
+// sanity/lib/client.ts
 import { createClient } from '@sanity/client'
 
 export const sanityClient = createClient({

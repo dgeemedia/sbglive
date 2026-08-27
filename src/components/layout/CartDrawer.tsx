@@ -1,3 +1,4 @@
+// src/components/layout/CartDrawer.tsx
 'use client'
 import { useCart } from '@/hooks/useCart'
 import Image from 'next/image'

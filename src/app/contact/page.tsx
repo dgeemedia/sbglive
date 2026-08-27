@@ -1,3 +1,4 @@
+// src/app/contact/page.tsx
 export default function ContactPage() {
   return (
     <div className="max-w-xl mx-auto px-4 py-16">

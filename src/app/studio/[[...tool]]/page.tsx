@@ -1,3 +1,4 @@
+// src/app/studio/[[...tool]]/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'

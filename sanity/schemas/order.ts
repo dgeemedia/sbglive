@@ -1,3 +1,4 @@
+// sanity/schemas/order.ts
 import { defineType, defineField } from 'sanity'
 
 export default defineType({

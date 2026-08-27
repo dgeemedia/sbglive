@@ -1,3 +1,4 @@
+// sanity/lib/image.ts
 import imageUrlBuilder from '@sanity/image-url'
 import { sanityClient } from './client'
 import type { SanityImage } from '@/types'

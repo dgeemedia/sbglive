@@ -1,3 +1,4 @@
+// src/components/layout/Ticker.tsx
 export default function Ticker() {
   const msg = 'NEW DROP AVAILABLE • FREE DELIVERY IN LAGOS • HOLY FURY NOW LIVE • LIMITED EDITIONS • '
   const repeated = msg.repeat(6)

@@ -1,3 +1,4 @@
+// src/app/page.tsx
 import { getAllProducts, getComingSoon } from '@/lib/queries'
 import ProductGrid from '@/components/shop/ProductGrid'
 import Image from 'next/image'

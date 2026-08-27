@@ -1,3 +1,4 @@
+// src/app/search/page.tsx
 'use client'
 import { useState, useEffect } from 'react'
 import type { Product } from '@/types'
