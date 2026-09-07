@@ -52,6 +52,14 @@ function YouTube() {
   )
 }
 
+function LinkedIn() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+      <path d="M6.94 8.5H3.56V20h3.38V8.5ZM5.25 3.25a1.96 1.96 0 1 0 0 3.92 1.96 1.96 0 0 0 0-3.92ZM20.44 20h-3.37v-5.9c0-1.4-.03-3.2-1.95-3.2-1.96 0-2.26 1.53-2.26 3.1V20h-3.37V8.5h3.24v1.57h.05c.45-.85 1.56-1.75 3.22-1.75 3.44 0 4.08 2.27 4.08 5.21V20Z" />
+    </svg>
+  )
+}
+
 export function WhatsAppGlyph() {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
@@ -67,6 +75,7 @@ const ICONS: Record<string, () => ReactElement> = {
   snapchat: Snapchat,
   facebook: Facebook,
   youtube: YouTube,
+  linkedin: LinkedIn,
 }
 
 export default function SocialIcons({

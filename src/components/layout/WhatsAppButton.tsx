@@ -1,10 +1,17 @@
 // src/components/layout/WhatsAppButton.tsx
 import { WhatsAppGlyph } from './SocialIcons'
 
-export default function WhatsAppButton({ whatsappNumber }: { whatsappNumber?: string }) {
-  if (!whatsappNumber) return null
+export default function WhatsAppButton({
+  whatsappNumber,
+  phone,
+}: {
+  whatsappNumber?: string
+  phone?: string
+}) {
+  const source = whatsappNumber || phone
+  if (!source) return null
 
-  const digits = whatsappNumber.replace(/[^\d]/g, '')
+  const digits = source.replace(/[^\d]/g, '')
   if (!digits) return null
 
   return (
@@ -13,7 +20,7 @@ export default function WhatsAppButton({ whatsappNumber }: { whatsappNumber?: st
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with us on WhatsApp"
-      className="fixed bottom-5 right-5 z-[60] w-14 h-14 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-lg shadow-black/40 hover:scale-105 transition-transform"
+      className="fixed bottom-5 right-5 z-[110] w-14 h-14 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-lg shadow-black/40 hover:scale-105 transition-transform"
     >
       <WhatsAppGlyph />
     </a>

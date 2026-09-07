@@ -34,7 +34,7 @@ export interface CartItem {
 }
 
 export interface SocialLink {
-  platform: 'instagram' | 'tiktok' | 'twitter' | 'snapchat' | 'facebook' | 'youtube'
+  platform: 'instagram' | 'tiktok' | 'twitter' | 'snapchat' | 'facebook' | 'youtube' | 'linkedin'
   url: string
 }
 

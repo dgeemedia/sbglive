@@ -37,7 +37,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <CartDrawer />
         <main>{children}</main>
         <Footer settings={settings} />
-        <WhatsAppButton whatsappNumber={settings?.whatsappNumber} />
+        <WhatsAppButton whatsappNumber={settings?.whatsappNumber} phone={settings?.phone} />
         <Toaster position="bottom-center" />
       </body>
     </html>

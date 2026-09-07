@@ -70,6 +70,7 @@ export default {
                   { title: 'Snapchat', value: 'snapchat' },
                   { title: 'Facebook', value: 'facebook' },
                   { title: 'YouTube', value: 'youtube' },
+                  { title: 'LinkedIn', value: 'linkedin' },
                 ],
               },
             },
