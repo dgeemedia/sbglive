@@ -3,12 +3,18 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import SocialIcons from './SocialIcons'
+import SocialIcons, { WhatsAppGlyph } from './SocialIcons'
 import type { SocialLink } from '@/types'
 
 const SESSION_KEY = 'sbg_intro_seen'
 
-export default function IntroScreen({ socialLinks }: { socialLinks?: SocialLink[] }) {
+export default function IntroScreen({
+  socialLinks,
+  whatsappNumber,
+}: {
+  socialLinks?: SocialLink[]
+  whatsappNumber?: string
+}) {
   const pathname = usePathname()
   const videoRef = useRef<HTMLVideoElement>(null)
 
@@ -93,10 +99,23 @@ export default function IntroScreen({ socialLinks }: { socialLinks?: SocialLink[
 
       {/* Socials + credit */}
       <div className="relative z-10 pb-8 flex flex-col items-center gap-4">
-        <SocialIcons
-          links={socialLinks}
-          iconClassName="border border-white/30 hover:border-[#ff2d2d] hover:text-[#ff2d2d] text-white w-9 h-9 flex items-center justify-center transition-colors rounded-full"
-        />
+        <div className="flex gap-2 flex-wrap justify-center items-center">
+          <SocialIcons
+            links={socialLinks}
+            iconClassName="border border-white/30 hover:border-[#ff2d2d] hover:text-[#ff2d2d] text-white w-9 h-9 flex items-center justify-center transition-colors rounded-full"
+          />
+          {whatsappNumber && (
+            <a
+              href={`https://wa.me/${whatsappNumber.replace(/[^\d]/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Chat on WhatsApp"
+              className="w-9 h-9 rounded-full bg-[#25D366] text-white flex items-center justify-center"
+            >
+              <WhatsAppGlyph className="w-4 h-4" />
+            </a>
+          )}
+        </div>
         <p className="font-mono text-[10px] tracking-[2px] text-white/50 text-center">
           WEBSITE BY
           <br />

@@ -1,9 +1,16 @@
 // src/components/layout/Footer.tsx
 import Link from 'next/link'
-import SocialIcons from './SocialIcons'
+import SocialIcons, { WhatsAppGlyph } from './SocialIcons'
 import type { SiteSettings } from '@/types'
 
+function whatsappDigits(settings?: SiteSettings | null) {
+  const source = settings?.whatsappNumber || settings?.phone
+  return source ? source.replace(/[^\d]/g, '') : ''
+}
+
 export default function Footer({ settings }: { settings?: SiteSettings | null }) {
+  const waDigits = whatsappDigits(settings)
+
   return (
     <footer className="bg-[#111] border-t border-[#2a2a2a] mt-20">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8 px-6 py-12">
@@ -18,7 +25,20 @@ export default function Footer({ settings }: { settings?: SiteSettings | null })
               {settings.phone}
             </a>
           )}
-          <SocialIcons links={settings?.socialLinks} className="mt-4" />
+          <div className="flex gap-2 mt-4 flex-wrap items-center">
+            <SocialIcons links={settings?.socialLinks} />
+            {waDigits && (
+              <a
+                href={`https://wa.me/${waDigits}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Chat on WhatsApp"
+                className="w-8 h-8 rounded-full bg-[#25D366] text-white flex items-center justify-center"
+              >
+                <WhatsAppGlyph className="w-4 h-4" />
+              </a>
+            )}
+          </div>
         </div>
         <div>
           <h4 className="font-bebas text-lg tracking-[4px] text-white mb-4">SHOP</h4>

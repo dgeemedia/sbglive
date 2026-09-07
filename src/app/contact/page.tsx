@@ -1,5 +1,11 @@
 // src/app/contact/page.tsx
-export default function ContactPage() {
+import { getSiteSettings } from '@/lib/queries'
+import SocialIcons, { WhatsAppGlyph } from '@/components/layout/SocialIcons'
+
+export default async function ContactPage() {
+  const settings = await getSiteSettings()
+  const waDigits = (settings?.whatsappNumber || settings?.phone || '').replace(/[^\d]/g, '')
+
   return (
     <div className="max-w-xl mx-auto px-4 py-16">
       <h1 className="font-bebas text-4xl tracking-[6px] mb-2">CONTACT</h1>
@@ -21,10 +27,26 @@ export default function ContactPage() {
           SEND MESSAGE
         </button>
       </div>
+
+      {waDigits && (
+        <a
+          href={`https://wa.me/${waDigits}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-8 flex items-center justify-center gap-3 w-full bg-[#25D366] hover:opacity-90 text-white py-4 font-bebas text-xl tracking-[4px] transition-opacity"
+        >
+          <WhatsAppGlyph className="w-6 h-6" />
+          CHAT ON WHATSAPP
+        </a>
+      )}
+
       <div className="mt-12 space-y-3 border-t border-[#2a2a2a] pt-8">
         <p className="text-xs tracking-[3px] text-[#555]">EMAIL — <span className="text-[#888]">hello@sbglive.live</span></p>
-        <p className="text-xs tracking-[3px] text-[#555]">INSTAGRAM — <span className="text-[#888]">@sbglive.live</span></p>
-        <p className="text-xs tracking-[3px] text-[#555]">LOCATION — <span className="text-[#888]">Lagos, Nigeria</span></p>
+        {settings?.phone && (
+          <p className="text-xs tracking-[3px] text-[#555]">PHONE — <span className="text-[#888]">{settings.phone}</span></p>
+        )}
+        <p className="text-xs tracking-[3px] text-[#555]">LOCATION — <span className="text-[#888]">{settings?.address || 'Lagos, Nigeria'}</span></p>
+        <SocialIcons links={settings?.socialLinks} className="pt-2" />
       </div>
     </div>
   )
