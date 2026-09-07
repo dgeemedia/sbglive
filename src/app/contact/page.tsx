@@ -41,7 +41,7 @@ export default async function ContactPage() {
       )}
 
       <div className="mt-12 space-y-3 border-t border-[#2a2a2a] pt-8">
-        <p className="text-xs tracking-[3px] text-[#555]">EMAIL — <span className="text-[#888]">hello@sbglive.live</span></p>
+        <p className="text-xs tracking-[3px] text-[#555]">EMAIL — <span className="text-[#888]">hello@sbgfashion.org</span></p>
         {settings?.phone && (
           <p className="text-xs tracking-[3px] text-[#555]">PHONE — <span className="text-[#888]">{settings.phone}</span></p>
         )}

@@ -11,9 +11,11 @@ const SESSION_KEY = 'sbg_intro_seen'
 export default function IntroScreen({
   socialLinks,
   whatsappNumber,
+  videoUrl,
 }: {
   socialLinks?: SocialLink[]
   whatsappNumber?: string
+  videoUrl?: string
 }) {
   const pathname = usePathname()
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -59,7 +61,7 @@ export default function IntroScreen({
       <video
         ref={videoRef}
         className="absolute inset-0 w-full h-full object-cover"
-        src="/videos/intro.mp4"
+        src={videoUrl || '/videos/intro.mp4'}
         autoPlay
         muted={muted}
         loop

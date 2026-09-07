@@ -39,6 +39,7 @@ export interface SocialLink {
 }
 
 export interface SiteSettings {
+  introVideo?: { asset?: { url: string } }
   heroTitle?: string
   heroHighlight?: string
   heroSubtitle?: string

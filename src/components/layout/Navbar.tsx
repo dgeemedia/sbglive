@@ -19,7 +19,7 @@ export default function Navbar() {
     <nav className="bg-[#111] border-b border-[#2a2a2a] sticky top-0 z-50">
       <div className="flex items-center justify-between px-6 h-14">
         <Link href="/" className="font-bebas text-3xl tracking-[4px] text-white">
-          SBG<span className="text-[#ff2d2d]">live</span>
+          SBG<span className="text-[#ff2d2d]">FASHION</span>
         </Link>
         <div className="flex items-center gap-5">
           <Link href="/search" className="text-[#888] hover:text-white text-xs tracking-[2px] transition-colors">SEARCH</Link>

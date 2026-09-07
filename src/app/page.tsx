@@ -14,7 +14,7 @@ export default async function HomePage() {
   ])
 
   const heroTitle = settings?.heroTitle || 'SBG'
-  const heroHighlight = settings?.heroHighlight ?? 'live'
+  const heroHighlight = settings?.heroHighlight ?? 'FASHION'
   const heroSubtitle = settings?.heroSubtitle || 'LAGOS • ALL PRODUCTS'
   const heroBg = settings?.heroBackgroundImage ? urlFor(settings.heroBackgroundImage).width(1600).url() : null
 

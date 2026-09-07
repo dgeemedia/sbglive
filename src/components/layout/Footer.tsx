@@ -15,7 +15,7 @@ export default function Footer({ settings }: { settings?: SiteSettings | null })
     <footer className="bg-[#111] border-t border-[#2a2a2a] mt-20">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8 px-6 py-12">
         <div>
-          <h4 className="font-bebas text-lg tracking-[4px] text-white mb-4">sbglive</h4>
+          <h4 className="font-bebas text-lg tracking-[4px] text-white mb-4">SBG<span className="text-[#ff2d2d]">FASHION</span></h4>
           <p className="text-[#888] text-sm leading-relaxed">Lagos-based streetwear pushing the limits of fashion and culture.</p>
           {settings?.address && (
             <p className="text-[#888] text-sm leading-relaxed mt-3">{settings.address}</p>
@@ -60,7 +60,7 @@ export default function Footer({ settings }: { settings?: SiteSettings | null })
         </div>
       </div>
       <div className="border-t border-[#2a2a2a] px-6 py-4 text-center text-[#555] text-xs tracking-[2px]">
-        © {new Date().getFullYear()} sbglive.LIVE — ALL RIGHTS RESERVED — LAGOS, NIGERIA
+        © {new Date().getFullYear()} SBGFASHION — ALL RIGHTS RESERVED — LAGOS, NIGERIA
       </div>
       {/* Fixed credit — intentionally not sourced from Sanity, do not make editable */}
       <div className="border-t border-[#2a2a2a] px-6 py-3 text-center text-[#444] text-[10px] tracking-[2px] font-mono">

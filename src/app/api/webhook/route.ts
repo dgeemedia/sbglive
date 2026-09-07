@@ -45,7 +45,7 @@ export async function POST(req: NextRequest): Promise<Response> {
         const { Resend } = await import('resend')
         const resend = new Resend(process.env.RESEND_API_KEY)
         await resend.emails.send({
-          from: process.env.EMAIL_FROM || 'orders@sbglive.com',
+          from: process.env.EMAIL_FROM || 'orders@sbgfashion.org',
           to: customer.email,
           subject: `Order Confirmed – ${reference}`,
           html: buildOrderEmail({
@@ -86,7 +86,7 @@ function buildOrderEmail({ name, reference, items, total }: {
   <html>
   <body style="background:#0a0a0a;color:#e8e8e8;font-family:sans-serif;margin:0;padding:20px">
     <div style="max-width:560px;margin:0 auto;background:#111;border:1px solid #2a2a2a;padding:32px">
-      <h1 style="font-size:28px;letter-spacing:4px;color:#ff2d2d;margin:0 0 4px">SBGLIVE</h1>
+      <h1 style="font-size:28px;letter-spacing:4px;color:#ff2d2d;margin:0 0 4px">SBGFASHION</h1>
       <p style="color:#888;font-size:11px;letter-spacing:3px;margin:0 0 24px">ORDER CONFIRMED</p>
       <p style="color:#e8e8e8;margin-bottom:8px">Hey ${name},</p>
       <p style="color:#888;font-size:14px;line-height:1.6;margin-bottom:24px">Your order is confirmed and payment received. We will get it out to you ASAP.</p>

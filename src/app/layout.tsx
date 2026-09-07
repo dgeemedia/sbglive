@@ -10,10 +10,10 @@ import { Toaster } from 'react-hot-toast'
 import { getSiteSettings } from '@/lib/queries'
 
 export const metadata: Metadata = {
-  title: 'sbglive – Lagos Streetwear',
+  title: 'SBGFASHION – Lagos Streetwear',
   description: 'Pushing the limits of fashion and culture. Lagos-based streetwear brand.',
   openGraph: {
-    title: 'sbglive',
+    title: 'SBGFASHION',
     description: 'Lagos streetwear',
     type: 'website',
   },
@@ -30,7 +30,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Space+Mono&display=swap" rel="stylesheet" />
       </head>
       <body>
-        <IntroScreen socialLinks={settings?.socialLinks} whatsappNumber={settings?.whatsappNumber || settings?.phone} />
+        <IntroScreen
+          socialLinks={settings?.socialLinks}
+          whatsappNumber={settings?.whatsappNumber || settings?.phone}
+          videoUrl={settings?.introVideo?.asset?.url}
+        />
         <Ticker />
         <Navbar />
         <CartDrawer />

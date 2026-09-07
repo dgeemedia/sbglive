@@ -51,6 +51,6 @@ export const useCart = create<CartStore>()(
       total: () => get().items.reduce((s, i) => s + i.price * i.quantity, 0),
       count: () => get().items.reduce((s, i) => s + i.quantity, 0),
     }),
-    { name: 'sbglive-cart' }
+    { name: 'sbgfashion-cart' }
   )
 )

@@ -5,6 +5,7 @@ import type { Product, SiteSettings } from '@/types'
 export async function getSiteSettings(): Promise<SiteSettings | null> {
   return sanityClient.fetch(
     `*[_type == "siteSettings"][0]{
+      introVideo{ asset->{ url } },
       heroTitle,
       heroHighlight,
       heroSubtitle,

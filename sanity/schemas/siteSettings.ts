@@ -7,6 +7,13 @@ export default {
   // The Studio structure (sanity.config.ts) locks editors into that one document.
   fields: [
     {
+      name: 'introVideo',
+      title: 'Intro Video',
+      type: 'file',
+      options: { accept: 'video/mp4' },
+      description: 'The background video on the "Press Start" splash screen. Leave empty to use the default built-in video. Keep file size small (a few MB) since it autoplays on page load.',
+    },
+    {
       name: 'heroTitle',
       title: 'Hero Title',
       type: 'string',
