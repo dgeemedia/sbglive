@@ -14,6 +14,16 @@ export default defineConfig({
         S.list()
           .title('SBGLive CMS')
           .items([
+            S.listItem()
+              .title('Site Settings')
+              .id('siteSettings')
+              .child(
+                S.document()
+                  .schemaType('siteSettings')
+                  .documentId('siteSettings')
+                  .title('Site Settings')
+              ),
+            S.divider(),
             S.listItem().title('Products').schemaType('product').child(
               S.documentList().title('Products').filter('_type == "product"').defaultOrdering([{ field: 'order', direction: 'asc' }])
             ),

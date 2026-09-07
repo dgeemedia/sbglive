@@ -1,5 +1,5 @@
 // src/app/page.tsx
-import { getAllProducts, getComingSoon } from '@/lib/queries'
+import { getAllProducts, getComingSoon, getSiteSettings } from '@/lib/queries'
 import ProductGrid from '@/components/shop/ProductGrid'
 import Image from 'next/image'
 import { urlFor } from '../../sanity/lib/image'
@@ -7,22 +7,32 @@ import { urlFor } from '../../sanity/lib/image'
 export const revalidate = 60
 
 export default async function HomePage() {
-  const [products, comingSoon] = await Promise.all([
+  const [products, comingSoon, settings] = await Promise.all([
     getAllProducts(),
     getComingSoon(),
+    getSiteSettings(),
   ])
+
+  const heroTitle = settings?.heroTitle || 'SBG'
+  const heroHighlight = settings?.heroHighlight ?? 'live'
+  const heroSubtitle = settings?.heroSubtitle || 'LAGOS • ALL PRODUCTS'
+  const heroBg = settings?.heroBackgroundImage ? urlFor(settings.heroBackgroundImage).width(1600).url() : null
 
   return (
     <>
       {/* Hero */}
       <section className="bg-[#0a0a0a] py-16 text-center border-b border-[#2a2a2a] relative overflow-hidden">
-        <div className="absolute inset-0 opacity-5"
-          style={{ backgroundImage: 'repeating-linear-gradient(45deg, #ff2d2d 0, #ff2d2d 1px, transparent 0, transparent 50%)', backgroundSize: '20px 20px' }}
-        />
-        <h1 className="font-bebas text-[clamp(60px,12vw,140px)] leading-none tracking-[10px] text-white relative">
-          SBG<span className="text-[#ff2d2d]">live</span>
+        {heroBg ? (
+          <Image src={heroBg} alt="" fill className="object-cover opacity-30" priority />
+        ) : (
+          <div className="absolute inset-0 opacity-5"
+            style={{ backgroundImage: 'repeating-linear-gradient(45deg, #ff2d2d 0, #ff2d2d 1px, transparent 0, transparent 50%)', backgroundSize: '20px 20px' }}
+          />
+        )}
+        <h1 className="font-bebas text-[clamp(60px,12vw,140px)] leading-none tracking-[10px] text-white relative z-10">
+          {heroTitle}<span className="text-[#ff2d2d]">{heroHighlight}</span>
         </h1>
-        <p className="text-[#888] text-xs tracking-[6px] mt-2">LAGOS • ALL PRODUCTS</p>
+        <p className="text-[#888] text-xs tracking-[6px] mt-2 relative z-10">{heroSubtitle}</p>
       </section>
 
       {/* Coming Soon strip */}

@@ -33,6 +33,22 @@ export interface CartItem {
   slug: string
 }
 
+export interface SocialLink {
+  platform: 'instagram' | 'tiktok' | 'twitter' | 'snapchat' | 'facebook' | 'youtube'
+  url: string
+}
+
+export interface SiteSettings {
+  heroTitle?: string
+  heroHighlight?: string
+  heroSubtitle?: string
+  heroBackgroundImage?: SanityImage
+  address?: string
+  phone?: string
+  whatsappNumber?: string
+  socialLinks?: SocialLink[]
+}
+
 export interface Order {
   _id?: string
   reference: string

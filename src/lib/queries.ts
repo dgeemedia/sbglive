@@ -1,6 +1,21 @@
 // src/lib/queries.ts
 import { sanityClient } from '../../sanity/lib/client'
-import type { Product } from '@/types'
+import type { Product, SiteSettings } from '@/types'
+
+export async function getSiteSettings(): Promise<SiteSettings | null> {
+  return sanityClient.fetch(
+    `*[_type == "siteSettings"][0]{
+      heroTitle,
+      heroHighlight,
+      heroSubtitle,
+      heroBackgroundImage,
+      address,
+      phone,
+      whatsappNumber,
+      socialLinks[]{ platform, url }
+    }`
+  )
+}
 
 const PRODUCT_FIELDS = `
   _id,
