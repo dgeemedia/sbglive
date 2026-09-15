@@ -1,42 +1,56 @@
 // src/app/api/webhook/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import crypto from 'crypto'
 import { sanityWriteClient } from '../../../../sanity/lib/client'
 
 export async function POST(req: NextRequest): Promise<Response> {
   const rawBody = await req.text()
-  const signature = req.headers.get('x-paystack-signature')
 
-  // Verify webhook signature
-  const hash = crypto
-    .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY!)
-    .update(rawBody)
-    .digest('hex')
-
-  if (hash !== signature) {
+  // Flutterwave signs webhooks with a static secret hash you set yourself
+  // in the dashboard (Settings → Webhooks), sent back verbatim — not an HMAC.
+  const signature = req.headers.get('verif-hash')
+  if (!signature || signature !== process.env.FLUTTERWAVE_SECRET_HASH) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
   const event = JSON.parse(rawBody)
 
-  if (event.event === 'charge.success') {
-    const { reference, metadata, customer, amount } = event.data
+  if (event.event === 'charge.completed' && event.data?.status === 'successful') {
+    const { id, tx_ref, customer, amount, meta } = event.data
 
     try {
-      // Save order to Sanity
+      // Never trust the webhook payload alone for money — re-verify the
+      // transaction directly against Flutterwave before recording it.
+      const verifyRes = await fetch(
+        `https://api.flutterwave.com/v3/transactions/${id}/verify`,
+        { headers: { Authorization: `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}` } }
+      )
+      const verified = await verifyRes.json()
+      if (verified.status !== 'success' || verified.data?.status !== 'successful') {
+        return NextResponse.json({ error: 'Verification failed' }, { status: 400 })
+      }
+
+      // Avoid double-recording the same order if Flutterwave retries the webhook
+      const existing = await sanityWriteClient.fetch(
+        `*[_type == "order" && reference == $ref][0]{_id}`,
+        { ref: tx_ref }
+      )
+      if (existing) {
+        return NextResponse.json({ received: true })
+      }
+
       await sanityWriteClient.create({
         _type: 'order',
-        reference,
+        reference: tx_ref,
         email: customer.email,
-        phone: customer.phone || metadata?.phone,
-        firstName: metadata?.firstName || customer.first_name || '',
-        lastName: metadata?.lastName || customer.last_name || '',
-        address: metadata?.address || '',
-        city: metadata?.city || '',
-        state: metadata?.state || '',
+        phone: customer.phone_number || meta?.phone,
+        firstName: meta?.firstName || '',
+        lastName: meta?.lastName || '',
+        address: meta?.address || '',
+        city: meta?.city || '',
+        state: meta?.state || '',
         status: 'paid',
-        total: amount / 100,
-        items: metadata?.items || [],
+        total: amount,
+        items: meta?.items || [],
         createdAt: new Date().toISOString(),
       })
 
@@ -47,12 +61,12 @@ export async function POST(req: NextRequest): Promise<Response> {
         await resend.emails.send({
           from: process.env.EMAIL_FROM || 'orders@sbgfashion.org',
           to: customer.email,
-          subject: `Order Confirmed – ${reference}`,
+          subject: `Order Confirmed – ${tx_ref}`,
           html: buildOrderEmail({
-            name: metadata?.firstName || 'Customer',
-            reference,
-            items: metadata?.items || [],
-            total: amount / 100,
+            name: meta?.firstName || 'Customer',
+            reference: tx_ref,
+            items: meta?.items || [],
+            total: amount,
           }),
         })
       }

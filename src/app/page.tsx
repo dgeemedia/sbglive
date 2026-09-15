@@ -1,6 +1,7 @@
 // src/app/page.tsx
 import { getAllProducts, getComingSoon, getSiteSettings } from '@/lib/queries'
 import ProductGrid from '@/components/shop/ProductGrid'
+import HeroCarousel from '@/components/shop/HeroCarousel'
 import Image from 'next/image'
 import { urlFor } from '../../sanity/lib/image'
 
@@ -21,7 +22,7 @@ export default async function HomePage() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-[#0a0a0a] py-16 text-center border-b border-[#2a2a2a] relative overflow-hidden">
+      <section className="bg-[#0a0a0a] pt-16 pb-8 text-center border-b border-[#2a2a2a] relative overflow-hidden">
         {heroBg ? (
           <Image src={heroBg} alt="" fill className="object-cover opacity-30" priority />
         ) : (
@@ -33,6 +34,8 @@ export default async function HomePage() {
           {heroTitle}<span className="text-[#ff2d2d]">{heroHighlight}</span>
         </h1>
         <p className="text-[#888] text-xs tracking-[6px] mt-2 relative z-10">{heroSubtitle}</p>
+
+        <HeroCarousel products={products} />
       </section>
 
       {/* Coming Soon strip */}

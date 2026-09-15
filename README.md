@@ -5,7 +5,7 @@
 |---|---|---|
 | Frontend + API | Next.js 14 | Free on Vercel |
 | CMS / Admin | Sanity Studio | Free (up to 3 users) |
-| Payments | Paystack | 1.5% + ₦100 per txn |
+| Payments | Flutterwave | 1.4% per txn (capped ₦2,000) |
 | Emails | Resend | Free (3k emails/mo) |
 | Hosting | Vercel | Free hobby plan |
 
@@ -32,16 +32,17 @@ Then create an API token:
 
 ---
 
-## Step 2 — Create a Paystack Account
+## Step 2 — Create a Flutterwave Account
 
-1. Go to https://paystack.com and sign up
+1. Go to https://dashboard.flutterwave.com and sign up
 2. Complete business verification (you'll need your client's BVN/CAC)
 3. Dashboard → Settings → API Keys
 4. Copy:
-   - **Public Key** (starts with `pk_live_...`)
-   - **Secret Key** (starts with `sk_live_...`)
+   - **Public Key** (starts with `FLWPUBK-...`)
+   - **Secret Key** (starts with `FLWSECK-...`)
+5. While you're there, scroll to **Webhooks** and set a **Secret Hash** — invent any random string, save it, and copy it too (this is `FLUTTERWAVE_SECRET_HASH` below)
 
-> Use `pk_test_` / `sk_test_` keys during development — no real money moves
+> Use the `FLWPUBK_TEST-...` / `FLWSECK_TEST-...` keys shown in **Test Mode** during development — no real money moves, and Flutterwave gives you test card numbers to simulate payments
 
 ---
 
@@ -67,8 +68,9 @@ NEXT_PUBLIC_SANITY_PROJECT_ID=your_project_id
 NEXT_PUBLIC_SANITY_DATASET=production
 SANITY_API_TOKEN=your_write_token
 
-NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=pk_live_xxxx
-PAYSTACK_SECRET_KEY=sk_live_xxxx
+NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY=FLWPUBK-xxxx
+FLUTTERWAVE_SECRET_KEY=FLWSECK-xxxx
+FLUTTERWAVE_SECRET_HASH=your_own_random_secret_string
 
 RESEND_API_KEY=re_xxxx
 EMAIL_FROM=orders@yourdomain.com
@@ -115,14 +117,15 @@ vercel --prod
 
 ---
 
-## Step 7 — Set Up Paystack Webhook
+## Step 7 — Set Up Flutterwave Webhook
 
 This is **critical** — without it, orders won't be saved after payment.
 
-1. Paystack Dashboard → Settings → API Keys & Webhooks
+1. Flutterwave Dashboard → Settings → Webhooks
 2. Webhook URL: `https://yourdomain.vercel.app/api/webhook`
-3. Events to listen for: `charge.success`
-4. Save
+3. Secret Hash: the same random string you set in Step 2 — this must match `FLUTTERWAVE_SECRET_HASH` in your env vars exactly
+4. Events to listen for: `charge.completed`
+5. Save
 
 ---
 
@@ -156,8 +159,9 @@ sbglive-store/
 │   │   ├── contact/              ← Contact page
 │   │   ├── studio/               ← Sanity admin panel
 │   │   └── api/
-│   │       ├── checkout/         ← Initializes Paystack payment
-│   │       ├── webhook/          ← Receives Paystack confirmation
+│   │       ├── checkout/         ← Initializes Flutterwave payment
+│   │       │   └── verify/       ← Confirms a transaction after redirect
+│   │       ├── webhook/          ← Receives Flutterwave confirmation
 │   │       └── products/         ← Products REST endpoint
 │   ├── components/
 │   │   ├── layout/               ← Navbar, Footer, Ticker, CartDrawer
@@ -181,17 +185,18 @@ sbglive-store/
 ```
 Customer fills checkout form
         ↓
-POST /api/checkout → Paystack initializes transaction
+POST /api/checkout → Flutterwave initializes transaction
         ↓
-Customer redirected to Paystack payment page
+Customer redirected to Flutterwave payment page
         ↓
 Customer pays (card / bank transfer / USSD)
         ↓
-Paystack sends webhook → POST /api/webhook
+Flutterwave redirects back to /order-success?status=...&transaction_id=...
+        ↓                                    ↓
+Flutterwave sends webhook →         /order-success calls /api/checkout/verify
+POST /api/webhook                   to confirm status before showing "confirmed"
         ↓
-Webhook verified → Order saved to Sanity → Email sent to customer
-        ↓
-Customer redirected to /order-success
+Webhook verified against Flutterwave → Order saved to Sanity → Email sent to customer
 ```
 
 ---
@@ -216,7 +221,7 @@ Customer redirected to /order-success
 | Vercel | ✅ Unlimited deploys | $20/mo Pro |
 | Sanity | ✅ 3 users, 100k req/mo | $15/mo Growth |
 | Resend | ✅ 3,000 emails/mo | $20/mo |
-| Paystack | ✅ No monthly fee | 1.5% + ₦100/txn |
+| Flutterwave | ✅ No monthly fee | 1.4%/txn (capped ₦2,000) |
 
 **Total fixed cost to launch: ₦0**
 
@@ -224,4 +229,4 @@ Customer redirected to /order-success
 
 ## Support & Handoff
 
-Built with Next.js 14, Sanity v3, Paystack, Resend, Zustand, TailwindCSS.
+Built with Next.js, Sanity v3, Flutterwave, Resend, Zustand, TailwindCSS, Framer Motion.

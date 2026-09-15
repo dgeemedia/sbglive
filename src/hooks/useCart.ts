@@ -22,6 +22,7 @@ export const useCart = create<CartStore>()(
       items: [],
       isOpen: false,
       addItem: (item) => {
+        const qty = item.quantity && item.quantity > 0 ? item.quantity : 1
         const exists = get().items.find(
           i => i._id === item._id && i.size === item.size && i.color === item.color
         )
@@ -29,12 +30,12 @@ export const useCart = create<CartStore>()(
           set(s => ({
             items: s.items.map(i =>
               i._id === item._id && i.size === item.size && i.color === item.color
-                ? { ...i, quantity: i.quantity + 1 }
+                ? { ...i, quantity: i.quantity + qty }
                 : i
             )
           }))
         } else {
-          set(s => ({ items: [...s.items, { ...item, quantity: 1 }] }))
+          set(s => ({ items: [...s.items, { ...item, quantity: qty }] }))
         }
       },
       removeItem: (id, size, color) =>

@@ -64,7 +64,7 @@ export default function CheckoutPage() {
         <button onClick={handleCheckout} disabled={loading} className="w-full mt-6 bg-[#ff2d2d] hover:bg-red-700 disabled:bg-[#555] text-white py-4 font-bebas text-xl tracking-[4px] transition-colors">
           {loading ? 'PROCESSING...' : `PAY ₦${total().toLocaleString()}`}
         </button>
-        <p className="text-[#555] text-xs text-center mt-3 tracking-[1px]">Secured by Paystack · Cards · Bank Transfer · USSD</p>
+        <p className="text-[#555] text-xs text-center mt-3 tracking-[1px]">Secured by Flutterwave · Cards · Bank Transfer · USSD</p>
       </div>
       <div>
         <h2 className="font-bebas text-xl tracking-[4px] mb-4 text-[#888]">ORDER SUMMARY</h2>

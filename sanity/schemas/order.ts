@@ -6,7 +6,7 @@ export default defineType({
   title: 'Order',
   type: 'document',
   fields: [
-    defineField({ name: 'reference', title: 'Paystack Reference', type: 'string' }),
+    defineField({ name: 'reference', title: 'Flutterwave Reference', type: 'string' }),
     defineField({ name: 'firstName', title: 'First Name', type: 'string' }),
     defineField({ name: 'lastName', title: 'Last Name', type: 'string' }),
     defineField({ name: 'email', title: 'Email', type: 'string' }),

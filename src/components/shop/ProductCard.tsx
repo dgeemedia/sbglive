@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import type { Product } from '@/types'
 import { urlFor } from '../../../sanity/lib/image'
 import { useCart } from '@/hooks/useCart'
@@ -36,7 +37,9 @@ export default function ProductCard({ product }: { product: Product }) {
 
   return (
     <Link href={`/products/${product.slug}`} className="block group bg-[#0a0a0a] hover:bg-[#111] transition-colors">
-      <div
+      <motion.div
+        whileHover={{ scale: 1.015 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 22 }}
         className="relative aspect-square bg-[#1a1a1a] overflow-hidden"
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
@@ -74,7 +77,7 @@ export default function ProductCard({ product }: { product: Product }) {
             {product.isSoldOut ? 'SOLD OUT' : 'QUICK SHOP'}
           </button>
         </div>
-      </div>
+      </motion.div>
 
       <div className="p-3 border-t border-[#2a2a2a]">
         <h3 className="font-bebas tracking-[1px] text-sm text-[#e8e8e8] leading-tight line-clamp-2">{product.name}</h3>

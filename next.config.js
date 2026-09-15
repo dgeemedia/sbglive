@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const path = require('path')
+
 const nextConfig = {
   images: {
     remotePatterns: [
@@ -12,8 +14,12 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
+  // Next.js 16 removed the built-in eslint build step entirely — run
+  // `npx eslint .` yourself (or in CI) if you want lint checks.
+  turbopack: {
+    // Pins the workspace root to this folder so Turbopack stops guessing
+    // when it finds other lockfiles higher up on your machine.
+    root: path.join(__dirname),
   },
 }
 
