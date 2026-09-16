@@ -5,11 +5,11 @@ import { useCart } from '@/hooks/useCart'
 
 const links = [
   { label: 'HOME', href: '/' },
-  { label: 'NEW RELEASE', href: '/?cat=new' },
-  { label: 'TOPS', href: '/?cat=tops' },
-  { label: 'BOTTOMS', href: '/?cat=bottoms' },
-  { label: 'ACCESSORIES', href: '/?cat=accessories' },
-  { label: 'PRE-ORDER', href: '/?cat=comingsoon' },
+  { label: 'NEW RELEASE', href: '/category/new' },
+  { label: 'TOPS', href: '/category/tops' },
+  { label: 'BOTTOMS', href: '/category/bottoms' },
+  { label: 'ACCESSORIES', href: '/category/accessories' },
+  { label: 'PRE-ORDER', href: '/category/pre-order' },
   { label: 'CONTACT', href: '/contact' },
 ]
 

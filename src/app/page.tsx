@@ -2,6 +2,7 @@
 import { getAllProducts, getComingSoon, getSiteSettings } from '@/lib/queries'
 import ProductGrid from '@/components/shop/ProductGrid'
 import HeroCarousel from '@/components/shop/HeroCarousel'
+import ComingSoonGrid from '@/components/shop/ComingSoonGrid'
 import Image from 'next/image'
 import { urlFor } from '../../sanity/lib/image'
 
@@ -18,6 +19,7 @@ export default async function HomePage() {
   const heroHighlight = settings?.heroHighlight ?? 'FASHION'
   const heroSubtitle = settings?.heroSubtitle || 'LAGOS • ALL PRODUCTS'
   const heroBg = settings?.heroBackgroundImage ? urlFor(settings.heroBackgroundImage).width(1600).url() : null
+  const waDigits = (settings?.whatsappNumber || settings?.phone || '').replace(/[^\d]/g, '')
 
   return (
     <>
@@ -41,22 +43,7 @@ export default async function HomePage() {
       {comingSoon.length > 0 && (
         <section className="bg-[#111] border-b border-[#2a2a2a] px-4 py-6">
           <p className="font-bebas text-xs tracking-[6px] text-[#888] mb-4">COMING SOON</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {comingSoon.map(p => {
-              const img = p.images?.[0] ? urlFor(p.images[0]).width(400).url() : null
-              return (
-                <div key={p._id} className="border border-[#2a2a2a] p-3 text-center">
-                  <div className="aspect-square bg-[#1a1a1a] relative mb-3">
-                    {img && <Image src={img} alt={p.name} fill className="object-cover opacity-60" />}
-                  </div>
-                  <p className="font-bebas text-sm tracking-[2px] mb-2">{p.name}</p>
-                  <button className="w-full border border-[#2a2a2a] hover:border-[#c8a96e] hover:text-[#c8a96e] text-[#888] py-1.5 text-xs tracking-[2px] transition-colors font-bebas">
-                    NOTIFY ME
-                  </button>
-                </div>
-              )
-            })}
-          </div>
+          <ComingSoonGrid products={comingSoon} waDigits={waDigits} />
         </section>
       )}
 

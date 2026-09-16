@@ -66,3 +66,9 @@ export async function getComingSoon(): Promise<Product[]> {
     `*[_type == "product" && isComingSoon == true][0...4] { ${PRODUCT_FIELDS} }`
   )
 }
+
+export async function getAllComingSoon(): Promise<Product[]> {
+  return sanityClient.fetch(
+    `*[_type == "product" && isComingSoon == true] | order(order asc) { ${PRODUCT_FIELDS} }`
+  )
+}

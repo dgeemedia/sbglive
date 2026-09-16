@@ -42,20 +42,37 @@ export default function Footer({ settings }: { settings?: SiteSettings | null })
         </div>
         <div>
           <h4 className="font-bebas text-lg tracking-[4px] text-white mb-4">SHOP</h4>
-          {['New Release','Tops','Bottoms','Accessories','Pre-Order'].map(l => (
-            <Link key={l} href="/" className="block text-[#888] hover:text-white text-sm mb-2 transition-colors">{l}</Link>
+          {[
+            { label: 'New Release', href: '/category/new' },
+            { label: 'Tops', href: '/category/tops' },
+            { label: 'Bottoms', href: '/category/bottoms' },
+            { label: 'Accessories', href: '/category/accessories' },
+            { label: 'Pre-Order', href: '/category/pre-order' },
+          ].map(l => (
+            <Link key={l.label} href={l.href} className="block text-[#888] hover:text-white text-sm mb-2 transition-colors">{l.label}</Link>
           ))}
         </div>
         <div>
           <h4 className="font-bebas text-lg tracking-[4px] text-white mb-4">INFO</h4>
-          {['Contact','Gallery','Shipping Policy','Returns','Terms of Service'].map(l => (
-            <Link key={l} href="/" className="block text-[#888] hover:text-white text-sm mb-2 transition-colors">{l}</Link>
+          {[
+            { label: 'Contact', href: '/contact' },
+            { label: 'Gallery', href: '/gallery' },
+            { label: 'Shipping Policy', href: '/shipping-policy' },
+            { label: 'Returns', href: '/returns' },
+            { label: 'Terms of Service', href: '/terms-of-service' },
+          ].map(l => (
+            <Link key={l.label} href={l.href} className="block text-[#888] hover:text-white text-sm mb-2 transition-colors">{l.label}</Link>
           ))}
         </div>
         <div>
           <h4 className="font-bebas text-lg tracking-[4px] text-white mb-4">ACCOUNT</h4>
-          {['Track Order','Size Guide','FAQ','Privacy Policy'].map(l => (
-            <Link key={l} href="/" className="block text-[#888] hover:text-white text-sm mb-2 transition-colors">{l}</Link>
+          {[
+            { label: 'Track Order', href: '/track-order' },
+            { label: 'Size Guide', href: '/size-guide' },
+            { label: 'FAQ', href: '/faq' },
+            { label: 'Privacy Policy', href: '/privacy-policy' },
+          ].map(l => (
+            <Link key={l.label} href={l.href} className="block text-[#888] hover:text-white text-sm mb-2 transition-colors">{l.label}</Link>
           ))}
         </div>
       </div>

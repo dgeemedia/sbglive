@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import type { Product } from '@/types'
 import { useCart } from '@/hooks/useCart'
 import { urlFor } from '../../../../sanity/lib/image'
@@ -307,8 +307,10 @@ export default function ProductPage() {
 }
 
 /**
- * Drag left/right to spin through the product's photo set like a 360° turntable.
- * Falls back to a plain click-to-zoom image when there's only one photo.
+ * The full effect: hovering tilts the image in real 3D perspective (with a
+ * glossy light sheen that tracks the cursor), while dragging left/right spins
+ * through the product's photo set like a turntable. A quick tap (no real
+ * drag) opens the zoom lightbox.
  */
 function RotateViewer({
   product,
@@ -322,25 +324,47 @@ function RotateViewer({
   onOpenLightbox: () => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
-  const dragState = useRef({ dragging: false, startX: 0, lastX: 0, moved: 0, startIndex: 0 })
+  const dragState = useRef({ dragging: false, startX: 0, moved: 0, startIndex: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const frameCount = product.images?.length || 1
   const canRotate = frameCount > 1
   const PIXELS_PER_FRAME = 45 // drag distance needed to advance one photo
 
+  // 3D tilt — follows the cursor continuously, independent of the drag-to-rotate logic
+  const rotateX = useMotionValue(0)
+  const rotateY = useMotionValue(0)
+  const springX = useSpring(rotateX, { stiffness: 200, damping: 20 })
+  const springY = useSpring(rotateY, { stiffness: 200, damping: 20 })
+  const glareX = useTransform(springY, [-10, 10], [0, 100])
+  const glareY = useTransform(springX, [-10, 10], [100, 0])
+
+  const handlePointerMoveTilt = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = ref.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const px = (e.clientX - rect.left) / rect.width
+    const py = (e.clientY - rect.top) / rect.height
+    rotateY.set((px - 0.5) * 16)
+    rotateX.set((0.5 - py) * 16)
+  }
+
+  const resetTilt = () => {
+    rotateX.set(0)
+    rotateY.set(0)
+  }
+
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     ref.current?.setPointerCapture(e.pointerId)
-    dragState.current = { dragging: true, startX: e.clientX, lastX: e.clientX, moved: 0, startIndex: selectedImage }
+    dragState.current = { dragging: true, startX: e.clientX, moved: 0, startIndex: selectedImage }
     setIsDragging(true)
   }
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    handlePointerMoveTilt(e)
     const s = dragState.current
     if (!s.dragging || !canRotate) return
     const delta = e.clientX - s.startX
-    s.moved = Math.max(s.moved, Math.abs(e.clientX - s.lastX) + s.moved * 0)
     s.moved = Math.abs(delta)
-    s.lastX = e.clientX
 
     const framesToMove = Math.trunc(delta / PIXELS_PER_FRAME)
     let next = (s.startIndex - framesToMove) % frameCount
@@ -358,56 +382,71 @@ function RotateViewer({
   const currentImg = product.images?.[selectedImage]
 
   return (
-    <div
-      ref={ref}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={endDrag}
-      onPointerLeave={() => dragState.current.dragging && endDrag()}
-      className={`aspect-square bg-[#1a1a1a] relative border border-[#2a2a2a] overflow-hidden select-none touch-none ${canRotate ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-zoom-in'}`}
-    >
-      <AnimatePresence mode="popLayout" initial={false}>
-        {currentImg && (
-          <motion.div
-            key={currentImg._key}
-            initial={{ opacity: 0.4 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: isDragging ? 0 : 0.2 }}
-            className="absolute inset-0"
-          >
-            <Image
-              src={urlFor(currentImg).width(1000).height(1000).url()}
-              alt={product.name}
-              fill
-              className="object-cover pointer-events-none"
-              sizes="(max-width:768px) 100vw, 50vw"
-              priority
-              draggable={false}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {canRotate ? (
-        <>
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/50 px-2.5 py-1 pointer-events-none">
-            <span className="text-white text-xs">⟲</span>
-            <span className="text-[9px] tracking-[2px] text-white/80">DRAG TO ROTATE</span>
-          </div>
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1 pointer-events-none">
-            {product.images.map((img, i) => (
-              <span
-                key={img._key}
-                className={`w-1.5 h-1.5 rounded-full transition-colors ${i === selectedImage ? 'bg-white' : 'bg-white/30'}`}
+    <div style={{ perspective: 1200 }}>
+      <motion.div
+        ref={ref}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={endDrag}
+        onPointerLeave={() => { dragState.current.dragging && endDrag(); resetTilt() }}
+        style={{ rotateX: springX, rotateY: springY, transformStyle: 'preserve-3d' }}
+        whileHover={{ scale: 1.02 }}
+        className={`aspect-square bg-[#1a1a1a] relative border border-[#2a2a2a] overflow-hidden select-none touch-none ${canRotate ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-zoom-in'}`}
+      >
+        <AnimatePresence mode="popLayout" initial={false}>
+          {currentImg && (
+            <motion.div
+              key={currentImg._key}
+              initial={{ opacity: 0.4 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: isDragging ? 0 : 0.2 }}
+              className="absolute inset-0"
+            >
+              <Image
+                src={urlFor(currentImg).width(1000).height(1000).url()}
+                alt={product.name}
+                fill
+                className="object-cover pointer-events-none"
+                sizes="(max-width:768px) 100vw, 50vw"
+                priority
+                draggable={false}
               />
-            ))}
-          </div>
-        </>
-      ) : (
-        <span className="absolute bottom-2 right-2 text-[9px] tracking-[2px] text-white/70 bg-black/40 px-2 py-1 pointer-events-none">
-          TAP TO ZOOM
-        </span>
-      )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Glossy sheen that tracks the tilt for a real 3D feel */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none mix-blend-overlay"
+          style={{
+            background: useTransform(
+              [glareX, glareY] as any,
+              ([gx, gy]: any) => `radial-gradient(circle at ${gx}% ${gy}%, rgba(255,255,255,0.35), transparent 55%)`
+            ),
+          }}
+        />
+
+        {canRotate ? (
+          <>
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/50 px-2.5 py-1 pointer-events-none">
+              <span className="text-white text-xs">⟲</span>
+              <span className="text-[9px] tracking-[2px] text-white/80">DRAG TO ROTATE</span>
+            </div>
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1 pointer-events-none">
+              {product.images.map((img, i) => (
+                <span
+                  key={img._key}
+                  className={`w-1.5 h-1.5 rounded-full transition-colors ${i === selectedImage ? 'bg-white' : 'bg-white/30'}`}
+                />
+              ))}
+            </div>
+          </>
+        ) : (
+          <span className="absolute bottom-2 right-2 text-[9px] tracking-[2px] text-white/70 bg-black/40 px-2 py-1 pointer-events-none">
+            TAP TO ZOOM
+          </span>
+        )}
+      </motion.div>
     </div>
   )
 }
