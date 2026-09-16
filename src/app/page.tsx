@@ -21,19 +21,18 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* Hero */}
-      <section className="bg-[#0a0a0a] pt-16 pb-8 text-center border-b border-[#2a2a2a] relative overflow-hidden">
-        {heroBg ? (
-          <Image src={heroBg} alt="" fill className="object-cover opacity-30" priority />
-        ) : (
-          <div className="absolute inset-0 opacity-5"
-            style={{ backgroundImage: 'repeating-linear-gradient(45deg, #ff2d2d 0, #ff2d2d 1px, transparent 0, transparent 50%)', backgroundSize: '20px 20px' }}
-          />
+      {/* Hero — a slim label strip, the image roll is the real hero now */}
+      <section className="bg-[#0a0a0a] pt-6 pb-6 border-b border-[#2a2a2a] relative overflow-hidden">
+        {heroBg && (
+          <Image src={heroBg} alt="" fill className="object-cover opacity-10" priority />
         )}
-        <h1 className="font-bebas text-[clamp(60px,12vw,140px)] leading-none tracking-[10px] text-white relative z-10">
-          {heroTitle}<span className="text-[#ff2d2d]">{heroHighlight}</span>
-        </h1>
-        <p className="text-[#888] text-xs tracking-[6px] mt-2 relative z-10">{heroSubtitle}</p>
+        <div className="flex items-center justify-center gap-3 relative z-10">
+          <span className="h-px w-8 bg-[#2a2a2a]" />
+          <p className="font-bebas text-sm tracking-[8px] text-[#888]">
+            {heroTitle}<span className="text-[#ff2d2d]">{heroHighlight}</span> · {heroSubtitle}
+          </p>
+          <span className="h-px w-8 bg-[#2a2a2a]" />
+        </div>
 
         <HeroCarousel products={products} />
       </section>

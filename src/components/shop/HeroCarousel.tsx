@@ -41,7 +41,7 @@ export default function HeroCarousel({ products }: { products: Product[] }) {
   }
 
   return (
-    <div className="relative z-10 mt-10 group/hero">
+    <div className="relative z-10 mt-6 group/hero">
       <div className="flex items-center gap-3 px-4 mb-3">
         <span className="w-1.5 h-1.5 rounded-full bg-[#ff2d2d] animate-pulse" />
         <p className="text-[10px] tracking-[4px] text-[#888] font-bebas">TAP AN ITEM TO BUY INSTANTLY</p>

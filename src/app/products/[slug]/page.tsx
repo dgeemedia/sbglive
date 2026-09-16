@@ -3,9 +3,10 @@
 import { useEffect, useState, useRef } from 'react'
 import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { Product } from '@/types'
 import { useCart } from '@/hooks/useCart'
+import { urlFor } from '../../../../sanity/lib/image'
 import toast from 'react-hot-toast'
 
 const toastOptions = { style: { background: '#111', color: '#fff', border: '1px solid #2a2a2a', fontFamily: 'Barlow Condensed', letterSpacing: '2px' } }
@@ -46,11 +47,12 @@ export default function ProductPage() {
 
   const buildCartItem = () => {
     if (!product) return null
+    const img = product.images?.[0] ? urlFor(product.images[0]).width(600).url() : ''
     return {
       _id: product._id,
       name: product.name,
       price: product.price,
-      image: `/api/image?ref=${product.images?.[0]?.asset?._ref}`,
+      image: img,
       size: selectedSize || 'ONE SIZE',
       color: selectedColor || 'DEFAULT',
       quantity,
@@ -87,17 +89,19 @@ export default function ProductPage() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="max-w-6xl mx-auto px-4 py-10 pb-32 md:pb-10 grid grid-cols-1 md:grid-cols-2 gap-10"
+      className="max-w-6xl mx-auto px-4 py-10 pb-32 md:pb-10 grid grid-cols-1 md:grid-cols-2 gap-10 items-start"
     >
-      {/* Images */}
+      {/* Images — sticky so it stays in view while you scroll the details column */}
       <motion.div
         initial={{ opacity: 0, x: -24 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="md:sticky md:top-24"
       >
-        <TiltImage
+        <RotateViewer
           product={product}
           selectedImage={selectedImage}
+          setSelectedImage={setSelectedImage}
           onOpenLightbox={() => setLightboxOpen(true)}
         />
 
@@ -111,7 +115,7 @@ export default function ProductPage() {
                 whileTap={{ scale: 0.94 }}
                 className={`w-16 h-16 relative border transition-colors ${selectedImage === i ? 'border-white' : 'border-[#2a2a2a] hover:border-[#888]'}`}
               >
-                <Image src={`/api/image?ref=${img.asset._ref}`} alt="" fill className="object-cover" />
+                <Image src={urlFor(img).width(160).height(160).url()} alt="" fill className="object-cover" />
                 {selectedImage === i && (
                   <motion.div layoutId="thumb-active" className="absolute inset-0 ring-2 ring-white pointer-events-none" />
                 )}
@@ -282,7 +286,7 @@ export default function ProductPage() {
               className="relative w-full max-w-2xl aspect-square"
             >
               <Image
-                src={`/api/image?ref=${product.images[selectedImage].asset._ref}`}
+                src={urlFor(product.images[selectedImage]).width(1200).height(1200).url()}
                 alt={product.name}
                 fill
                 className="object-contain"
@@ -302,88 +306,108 @@ export default function ProductPage() {
   )
 }
 
-function TiltImage({
+/**
+ * Drag left/right to spin through the product's photo set like a 360° turntable.
+ * Falls back to a plain click-to-zoom image when there's only one photo.
+ */
+function RotateViewer({
   product,
   selectedImage,
+  setSelectedImage,
   onOpenLightbox,
 }: {
   product: Product
   selectedImage: number
+  setSelectedImage: (i: number) => void
   onOpenLightbox: () => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
-  const rotateX = useMotionValue(0)
-  const rotateY = useMotionValue(0)
-  const springX = useSpring(rotateX, { stiffness: 200, damping: 20 })
-  const springY = useSpring(rotateY, { stiffness: 200, damping: 20 })
-  const glareX = useTransform(springY, [-10, 10], [0, 100])
-  const glareY = useTransform(springX, [-10, 10], [100, 0])
+  const dragState = useRef({ dragging: false, startX: 0, lastX: 0, moved: 0, startIndex: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const frameCount = product.images?.length || 1
+  const canRotate = frameCount > 1
+  const PIXELS_PER_FRAME = 45 // drag distance needed to advance one photo
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = ref.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    const px = (e.clientX - rect.left) / rect.width
-    const py = (e.clientY - rect.top) / rect.height
-    rotateY.set((px - 0.5) * 18) // left/right tilt
-    rotateX.set((0.5 - py) * 18) // up/down tilt
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    ref.current?.setPointerCapture(e.pointerId)
+    dragState.current = { dragging: true, startX: e.clientX, lastX: e.clientX, moved: 0, startIndex: selectedImage }
+    setIsDragging(true)
   }
 
-  const handleMouseLeave = () => {
-    rotateX.set(0)
-    rotateY.set(0)
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const s = dragState.current
+    if (!s.dragging || !canRotate) return
+    const delta = e.clientX - s.startX
+    s.moved = Math.max(s.moved, Math.abs(e.clientX - s.lastX) + s.moved * 0)
+    s.moved = Math.abs(delta)
+    s.lastX = e.clientX
+
+    const framesToMove = Math.trunc(delta / PIXELS_PER_FRAME)
+    let next = (s.startIndex - framesToMove) % frameCount
+    if (next < 0) next += frameCount
+    if (next !== selectedImage) setSelectedImage(next)
+  }
+
+  const endDrag = () => {
+    const wasClick = dragState.current.moved < 6
+    dragState.current.dragging = false
+    setIsDragging(false)
+    if (wasClick) onOpenLightbox()
   }
 
   const currentImg = product.images?.[selectedImage]
 
   return (
-    <div style={{ perspective: 1200 }}>
-      <motion.div
-        ref={ref}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        onClick={onOpenLightbox}
-        style={{ rotateX: springX, rotateY: springY, transformStyle: 'preserve-3d' }}
-        whileHover={{ scale: 1.02 }}
-        className="aspect-square bg-[#1a1a1a] relative border border-[#2a2a2a] overflow-hidden cursor-zoom-in select-none"
-      >
-        <AnimatePresence mode="wait">
-          {currentImg && (
-            <motion.div
-              key={currentImg._key}
-              initial={{ opacity: 0, scale: 1.03 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.35 }}
-              className="absolute inset-0"
-            >
-              <Image
-                src={`/api/image?ref=${currentImg.asset._ref}`}
-                alt={product.name}
-                fill
-                className="object-cover pointer-events-none"
-                sizes="(max-width:768px) 100vw, 50vw"
-                priority
+    <div
+      ref={ref}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={endDrag}
+      onPointerLeave={() => dragState.current.dragging && endDrag()}
+      className={`aspect-square bg-[#1a1a1a] relative border border-[#2a2a2a] overflow-hidden select-none touch-none ${canRotate ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-zoom-in'}`}
+    >
+      <AnimatePresence mode="popLayout" initial={false}>
+        {currentImg && (
+          <motion.div
+            key={currentImg._key}
+            initial={{ opacity: 0.4 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: isDragging ? 0 : 0.2 }}
+            className="absolute inset-0"
+          >
+            <Image
+              src={urlFor(currentImg).width(1000).height(1000).url()}
+              alt={product.name}
+              fill
+              className="object-cover pointer-events-none"
+              sizes="(max-width:768px) 100vw, 50vw"
+              priority
+              draggable={false}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {canRotate ? (
+        <>
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/50 px-2.5 py-1 pointer-events-none">
+            <span className="text-white text-xs">⟲</span>
+            <span className="text-[9px] tracking-[2px] text-white/80">DRAG TO ROTATE</span>
+          </div>
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1 pointer-events-none">
+            {product.images.map((img, i) => (
+              <span
+                key={img._key}
+                className={`w-1.5 h-1.5 rounded-full transition-colors ${i === selectedImage ? 'bg-white' : 'bg-white/30'}`}
               />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Sheen that tracks the tilt for a subtle glossy 3D feel */}
-        <motion.div
-          className="absolute inset-0 pointer-events-none mix-blend-overlay"
-          style={{
-            background: useTransform(
-              [glareX, glareY] as any,
-              ([gx, gy]: any) => `radial-gradient(circle at ${gx}% ${gy}%, rgba(255,255,255,0.35), transparent 55%)`
-            ),
-          }}
-        />
-
+            ))}
+          </div>
+        </>
+      ) : (
         <span className="absolute bottom-2 right-2 text-[9px] tracking-[2px] text-white/70 bg-black/40 px-2 py-1 pointer-events-none">
           TAP TO ZOOM
         </span>
-      </motion.div>
+      )}
     </div>
   )
 }
