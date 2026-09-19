@@ -7,11 +7,13 @@ import { motion } from 'framer-motion'
 import type { Product } from '@/types'
 import { urlFor } from '../../../sanity/lib/image'
 import { useCart } from '@/hooks/useCart'
+import { useSpin360 } from '@/hooks/useSpin360'
 import toast from 'react-hot-toast'
 
 export default function ProductCard({ product }: { product: Product }) {
   const [hovered, setHovered] = useState(false)
   const { addItem, openCart } = useCart()
+  const { spinning, startSpin, stopSpin, onIteration } = useSpin360(!!product.isComingSoon)
 
   const img1 = product.images?.[0] ? urlFor(product.images[0]).width(600).url() : null
   const img2 = product.images?.[1] ? urlFor(product.images[1]).width(600).url() : null
@@ -42,41 +44,55 @@ export default function ProductCard({ product }: { product: Product }) {
         transition={{ type: 'spring', stiffness: 300, damping: 22 }}
         className="relative aspect-square bg-[#1a1a1a] overflow-hidden"
         onMouseEnter={() => setHovered(true)}
+        onPointerEnter={startSpin}
+        onPointerLeave={stopSpin}
         onMouseLeave={() => setHovered(false)}
       >
         {img1 && (
-          <Image
-            src={hovered && img2 ? img2 : img1}
-            alt={product.name}
-            fill
-            className="object-cover transition-opacity duration-300"
-            sizes="(max-width:768px) 50vw, 25vw"
-          />
+          <div className="absolute inset-0" style={{ perspective: 1000 }}>
+            <div
+              className={`absolute inset-0 ${spinning ? 'spin-360' : ''}`}
+              onAnimationIteration={onIteration}
+            >
+              <Image
+                src={hovered && img2 ? img2 : img1}
+                alt={product.name}
+                fill
+                className="object-cover transition-opacity duration-300"
+                sizes="(max-width:768px) 50vw, 25vw"
+              />
+            </div>
+          </div>
         )}
         {!img1 && (
           <div className="absolute inset-0 flex items-center justify-center text-[#2a2a2a] font-bebas text-2xl tracking-[3px]">NO IMAGE</div>
         )}
 
         {/* Badges */}
-        {product.isSoldOut && (
-          <span className="absolute top-2 left-2 bg-[#888] text-black text-[10px] font-bold tracking-[3px] px-2 py-1">SOLD OUT</span>
-        )}
-        {product.isNew && !product.isSoldOut && (
-          <span className="absolute top-2 left-2 bg-[#ff2d2d] text-white text-[10px] font-bold tracking-[3px] px-2 py-1">NEW</span>
-        )}
-        {product.isComingSoon && (
-          <span className="absolute top-2 left-2 bg-[#c8a96e] text-black text-[10px] font-bold tracking-[3px] px-2 py-1">SOON</span>
+        {product.isComingSoon ? (
+          <span className="absolute top-2 left-2 bg-[#c8a96e] text-black text-[10px] font-bold tracking-[3px] px-2 py-1">COMING SOON</span>
+        ) : (
+          <>
+            {product.isSoldOut && (
+              <span className="absolute top-2 left-2 bg-[#888] text-black text-[10px] font-bold tracking-[3px] px-2 py-1">SOLD OUT</span>
+            )}
+            {product.isNew && !product.isSoldOut && (
+              <span className="absolute top-2 left-2 bg-[#ff2d2d] text-white text-[10px] font-bold tracking-[3px] px-2 py-1">NEW</span>
+            )}
+          </>
         )}
 
-        {/* Quick shop overlay */}
-        <div className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity duration-200 ${hovered ? 'opacity-100' : 'opacity-0'}`}>
-          <button
-            onClick={handleQuickShop}
-            className={`px-6 py-2 font-bebas text-base tracking-[3px] transition-colors ${product.isSoldOut ? 'bg-[#888] text-black cursor-not-allowed' : 'bg-white text-black hover:bg-[#ff2d2d] hover:text-white'}`}
-          >
-            {product.isSoldOut ? 'SOLD OUT' : 'QUICK SHOP'}
-          </button>
-        </div>
+        {/* Quick shop overlay — skipped for Coming Soon items so the 360° spin stays visible */}
+        {!product.isComingSoon && (
+          <div className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity duration-200 ${hovered ? 'opacity-100' : 'opacity-0'}`}>
+            <button
+              onClick={handleQuickShop}
+              className={`px-6 py-2 font-bebas text-base tracking-[3px] transition-colors ${product.isSoldOut ? 'bg-[#888] text-black cursor-not-allowed' : 'bg-white text-black hover:bg-[#ff2d2d] hover:text-white'}`}
+            >
+              {product.isSoldOut ? 'SOLD OUT' : 'QUICK SHOP'}
+            </button>
+          </div>
+        )}
       </motion.div>
 
       <div className="p-3 border-t border-[#2a2a2a]">

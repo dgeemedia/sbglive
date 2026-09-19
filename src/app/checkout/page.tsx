@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 import Image from 'next/image'
 
 export default function CheckoutPage() {
-  const { items, total, clearCart } = useCart()
+  const { items, total, clearCart, syncPrices } = useCart()
   const [form, setForm] = useState({ firstName:'',lastName:'',email:'',phone:'',address:'',city:'',state:'' })
   const [loading, setLoading] = useState(false)
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => setForm(f=>({...f,[e.target.name]:e.target.value}))
@@ -36,6 +36,11 @@ export default function CheckoutPage() {
       })
       const data = await res.json()
       if (data.authorization_url) { window.location.href = data.authorization_url }
+      else if (data.code === 'PRICE_CHANGED' && Array.isArray(data.latest)) {
+        // Prices changed since these items were added — refresh them so the total on screen is correct
+        syncPrices(Object.fromEntries(data.latest.map((l: { productId: string; price: number }) => [l.productId, l.price])))
+        toast.error(data.error, { duration: 6000 })
+      }
       else { toast.error(data.error||'Payment initialization failed') }
     } catch { toast.error('Network error. Please try again.') }
     finally { setLoading(false) }

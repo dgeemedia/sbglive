@@ -1,6 +1,7 @@
 // src/lib/queries.ts
 import { sanityClient } from '../../sanity/lib/client'
 import type { Product, SiteSettings } from '@/types'
+import type { CheckoutProduct } from '@/lib/checkout'
 
 export async function getSiteSettings(): Promise<SiteSettings | null> {
   return sanityClient.fetch(
@@ -71,4 +72,16 @@ export async function getAllComingSoon(): Promise<Product[]> {
   return sanityClient.fetch(
     `*[_type == "product" && isComingSoon == true] | order(order asc) { ${PRODUCT_FIELDS} }`
   )
+}
+
+/**
+ * The facts checkout is allowed to trust: real price, name and availability straight
+ * from Sanity. Bypasses the CDN so a price or "coming soon" change the owner just made
+ * is what customers are charged / blocked on.
+ */
+export async function getCheckoutProducts(ids: string[]): Promise<CheckoutProduct[]> {
+  if (!ids.length) return []
+  return sanityClient
+    .withConfig({ useCdn: false })
+    .fetch(`*[_type == "product" && _id in $ids]{ _id, name, price, isSoldOut, isComingSoon }`, { ids })
 }

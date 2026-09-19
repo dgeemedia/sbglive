@@ -7,6 +7,7 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from
 import type { Product } from '@/types'
 import { useCart } from '@/hooks/useCart'
 import { urlFor } from '../../../../sanity/lib/image'
+import { buildNotifyUrl } from '@/lib/notify'
 import toast from 'react-hot-toast'
 
 const toastOptions = { style: { background: '#111', color: '#fff', border: '1px solid #2a2a2a', fontFamily: 'Barlow Condensed', letterSpacing: '2px' } }
@@ -22,6 +23,7 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [waDigits, setWaDigits] = useState('')
   const { addItem, openCart } = useCart()
 
   useEffect(() => {
@@ -30,6 +32,14 @@ export default function ProductPage() {
       .then(data => { setProduct(data); setLoading(false) })
       .catch(() => setLoading(false))
   }, [slug])
+
+  // WhatsApp number for the Coming Soon "Notify me" button
+  useEffect(() => {
+    fetch('/api/whatsapp')
+      .then(r => r.json())
+      .then(d => setWaDigits(d?.digits || ''))
+      .catch(() => {})
+  }, [])
 
   // Reset transient selections whenever a different product loads
   useEffect(() => {
@@ -60,7 +70,17 @@ export default function ProductPage() {
     }
   }
 
+  const handleNotify = () => {
+    if (!product) return
+    window.open(
+      buildNotifyUrl(product, waDigits, { size: selectedSize, color: selectedColor }),
+      '_blank',
+      'noopener,noreferrer'
+    )
+  }
+
   const handleAddToCart = () => {
+    if (product?.isComingSoon) return // can't be ordered yet
     if (!validateSelection()) return
     const item = buildCartItem()
     if (!item) return
@@ -70,6 +90,7 @@ export default function ProductPage() {
   }
 
   const handleBuyNow = () => {
+    if (product?.isComingSoon) return // can't be ordered yet
     if (!validateSelection()) return
     const item = buildCartItem()
     if (!item) return
@@ -133,7 +154,11 @@ export default function ProductPage() {
         className="space-y-6"
       >
         <div>
-          {product.isNew && (
+          {product.isComingSoon ? (
+            <span className="inline-block bg-[#c8a96e] text-black text-xs tracking-[3px] px-2 py-1 font-bebas">
+              COMING SOON
+            </span>
+          ) : product.isNew && (
             <motion.span
               animate={{ opacity: [1, 0.6, 1] }}
               transition={{ repeat: Infinity, duration: 1.8 }}
@@ -189,7 +214,7 @@ export default function ProductPage() {
         )}
 
         {/* Quantity */}
-        {!product.isSoldOut && (
+        {!product.isSoldOut && !product.isComingSoon && (
           <div>
             <p className="text-xs tracking-[3px] text-[#888] mb-2">QUANTITY</p>
             <div className="inline-flex items-center border border-[#2a2a2a]">
@@ -227,7 +252,14 @@ export default function ProductPage() {
 
         {/* CTA — desktop */}
         <div className="hidden md:flex gap-3">
-          {product.isSoldOut ? (
+          {product.isComingSoon ? (
+            <button
+              onClick={handleNotify}
+              className="w-full border border-[#c8a96e] text-[#c8a96e] hover:bg-[#25D366] hover:border-[#25D366] hover:text-white py-4 font-bebas text-lg tracking-[3px] transition-colors"
+            >
+              NOTIFY ME ON WHATSAPP
+            </button>
+          ) : product.isSoldOut ? (
             <button disabled className="w-full bg-[#888] text-black py-4 font-bebas text-xl tracking-[4px] cursor-not-allowed">SOLD OUT</button>
           ) : (
             <>
@@ -257,7 +289,14 @@ export default function ProductPage() {
       </motion.div>
 
       {/* Sticky mobile CTA */}
-      {!product.isSoldOut && (
+      {product.isComingSoon && (
+        <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#0a0a0a] border-t border-[#2a2a2a] p-3">
+          <button onClick={handleNotify} className="w-full border border-[#c8a96e] text-[#c8a96e] active:bg-[#25D366] active:border-[#25D366] active:text-white py-3 font-bebas text-sm tracking-[2px]">
+            NOTIFY ME ON WHATSAPP
+          </button>
+        </div>
+      )}
+      {!product.isSoldOut && !product.isComingSoon && (
         <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#0a0a0a] border-t border-[#2a2a2a] p-3 flex gap-2">
           <button onClick={handleAddToCart} className="w-1/2 border border-white text-white py-3 font-bebas text-sm tracking-[2px]">
             ADD TO CART

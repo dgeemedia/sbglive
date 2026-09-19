@@ -34,8 +34,20 @@ body {
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
   mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
 }
+/* Coming Soon products: continuous 360° turn while hovered (desktop) / touched (mobile).
+   Runs forever while the class is on; useSpin360 removes the class at the end of a turn
+   once the pointer has left. rotateY(360deg) lands exactly on rotateY(0), so that's seamless. */
+@keyframes spin-360 {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(360deg); }
+}
+.spin-360 {
+  animation: spin-360 1.8s linear infinite;
+  will-change: transform;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .hero-marquee-track, .ticker-inner { animation: none; }
+  .hero-marquee-track, .ticker-inner, .spin-360 { animation: none; }
 }
 
 ::-webkit-scrollbar { width: 4px; }
