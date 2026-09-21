@@ -30,8 +30,9 @@ const PRODUCT_FIELDS = `
   colors,
   description,
   inStock,
-  // "Sold out" if the owner ticked Sold Out OR unticked In Stock — the site used to ignore In Stock
-  "isSoldOut": isSoldOut == true || inStock == false,
+  // "Sold out" if the owner ticked Sold Out, OR unticked In Stock. A Coming Soon product is never
+  // "sold out" though — owners untick In Stock for those because there's no stock yet.
+  "isSoldOut": isSoldOut == true || (inStock == false && isComingSoon != true),
   isNew,
   isComingSoon,
   tags
@@ -84,5 +85,5 @@ export async function getCheckoutProducts(ids: string[]): Promise<CheckoutProduc
   if (!ids.length) return []
   return sanityClient
     .withConfig({ useCdn: false })
-    .fetch(`*[_type == "product" && _id in $ids]{ _id, name, price, sizes, colors, "isSoldOut": isSoldOut == true || inStock == false, isComingSoon }`, { ids })
+    .fetch(`*[_type == "product" && _id in $ids]{ _id, name, price, sizes, colors, "isSoldOut": isSoldOut == true || (inStock == false && isComingSoon != true), isComingSoon }`, { ids })
 }

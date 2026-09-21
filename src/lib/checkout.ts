@@ -10,7 +10,7 @@ export interface CheckoutProduct {
   price: number
   sizes?: string[] | null
   colors?: string[] | null
-  isSoldOut?: boolean // already true when the owner unticked "In Stock" (see queries.ts)
+  isSoldOut?: boolean // already true when the owner unticked "In Stock" (not for Coming Soon items — see queries.ts)
   isComingSoon?: boolean
 }
 
