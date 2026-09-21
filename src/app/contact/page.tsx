@@ -2,10 +2,11 @@
 import { getSiteSettings } from '@/lib/queries'
 import SocialIcons from '@/components/layout/SocialIcons'
 import ContactForm from '@/components/shop/ContactForm'
+import { waDigitsFromSettings } from '@/lib/phone'
 
 export default async function ContactPage() {
   const settings = await getSiteSettings()
-  const waDigits = (settings?.whatsappNumber || settings?.phone || '').replace(/[^\d]/g, '')
+  const waDigits = waDigitsFromSettings(settings)
 
   return (
     <div className="max-w-xl mx-auto px-4 py-16">
@@ -15,7 +16,7 @@ export default async function ContactPage() {
       <ContactForm waDigits={waDigits} />
 
       <div className="mt-12 space-y-3 border-t border-[#2a2a2a] pt-8">
-        <p className="text-xs tracking-[3px] text-[#555]">EMAIL — <span className="text-[#888]">hello@sbgfashion.org</span></p>
+        <p className="text-xs tracking-[3px] text-[#555]">EMAIL — <span className="text-[#888]">hello@sbgfashion.live</span></p>
         {settings?.phone && (
           <p className="text-xs tracking-[3px] text-[#555]">PHONE — <span className="text-[#888]">{settings.phone}</span></p>
         )}

@@ -1,20 +1,18 @@
 // src/components/layout/Footer.tsx
 import Link from 'next/link'
+import Image from 'next/image'
 import SocialIcons, { WhatsAppGlyph } from './SocialIcons'
 import type { SiteSettings } from '@/types'
-
-function whatsappDigits(settings?: SiteSettings | null) {
-  const source = settings?.whatsappNumber || settings?.phone
-  return source ? source.replace(/[^\d]/g, '') : ''
-}
+import { waDigitsFromSettings } from '@/lib/phone'
 
 export default function Footer({ settings }: { settings?: SiteSettings | null }) {
-  const waDigits = whatsappDigits(settings)
+  const waDigits = waDigitsFromSettings(settings)
 
   return (
     <footer className="bg-[#111] border-t border-[#2a2a2a] mt-20">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8 px-6 py-12">
         <div>
+          <Image src="/logo.png" alt="" width={72} height={72} className="w-[72px] h-[72px] rounded-full mb-4" />
           <h4 className="font-bebas text-lg tracking-[4px] text-white mb-4">SBG<span className="text-[#ff2d2d]">FASHION</span></h4>
           <p className="text-[#888] text-sm leading-relaxed">Lagos-based streetwear pushing the limits of fashion and culture.</p>
           {settings?.address && (

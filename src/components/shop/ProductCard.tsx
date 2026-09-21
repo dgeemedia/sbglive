@@ -8,6 +8,7 @@ import type { Product } from '@/types'
 import { urlFor } from '../../../sanity/lib/image'
 import { useCart } from '@/hooks/useCart'
 import { useSpin360 } from '@/hooks/useSpin360'
+import { defaultVariant, needsVariantChoice } from '@/lib/variants'
 import toast from 'react-hot-toast'
 
 export default function ProductCard({ product }: { product: Product }) {
@@ -18,16 +19,22 @@ export default function ProductCard({ product }: { product: Product }) {
   const img1 = product.images?.[0] ? urlFor(product.images[0]).width(600).url() : null
   const img2 = product.images?.[1] ? urlFor(product.images[1]).width(600).url() : null
 
+  // If there's a real size/colour choice, the button just opens the product page (the click falls
+  // through to the surrounding link) — we never quietly pick a size for the customer.
+  const mustChoose = needsVariantChoice(product)
+
   const handleQuickShop = (e: React.MouseEvent) => {
+    if (product.isSoldOut) { e.preventDefault(); return }
+    if (mustChoose) return
     e.preventDefault()
-    if (product.isSoldOut) return
+    const variant = defaultVariant(product)
     addItem({
       _id: product._id,
       name: product.name,
       price: product.price,
       image: img1 || '',
-      size: product.sizes?.[0] || 'ONE SIZE',
-      color: product.colors?.[0] || 'DEFAULT',
+      size: variant.size,
+      color: variant.color,
       quantity: 1,
       slug: product.slug,
     })
@@ -89,7 +96,7 @@ export default function ProductCard({ product }: { product: Product }) {
               onClick={handleQuickShop}
               className={`px-6 py-2 font-bebas text-base tracking-[3px] transition-colors ${product.isSoldOut ? 'bg-[#888] text-black cursor-not-allowed' : 'bg-white text-black hover:bg-[#ff2d2d] hover:text-white'}`}
             >
-              {product.isSoldOut ? 'SOLD OUT' : 'QUICK SHOP'}
+              {product.isSoldOut ? 'SOLD OUT' : mustChoose ? 'CHOOSE OPTIONS' : 'QUICK SHOP'}
             </button>
           </div>
         )}

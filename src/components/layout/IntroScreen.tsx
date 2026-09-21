@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import SocialIcons, { WhatsAppGlyph } from './SocialIcons'
 import type { SocialLink } from '@/types'
+import { toWaDigits } from '@/lib/phone'
 
 const SESSION_KEY = 'sbg_intro_seen'
 
@@ -75,9 +76,9 @@ export default function IntroScreen({
             links={socialLinks}
             iconClassName="border border-white/30 hover:border-[#ff2d2d] hover:text-[#ff2d2d] text-white w-9 h-9 flex items-center justify-center transition-colors rounded-full"
           />
-          {whatsappNumber && (
+          {toWaDigits(whatsappNumber) && (
             <a
-              href={`https://wa.me/${whatsappNumber.replace(/[^\d]/g, '')}`}
+              href={`https://wa.me/${toWaDigits(whatsappNumber)}`}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Chat on WhatsApp"

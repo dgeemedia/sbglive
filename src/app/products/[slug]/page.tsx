@@ -27,10 +27,16 @@ export default function ProductPage() {
   const { addItem, openCart } = useCart()
 
   useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    // A missing product comes back as a 404 with an error body — that must become "not found",
+    // not be treated as a product (which crashed the page).
     fetch(`/api/products/${slug}`)
-      .then(r => r.json())
-      .then(data => { setProduct(data); setLoading(false) })
-      .catch(() => setLoading(false))
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => { if (!cancelled) setProduct(data && data._id ? data : null) })
+      .catch(() => { if (!cancelled) setProduct(null) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
   }, [slug])
 
   // WhatsApp number for the Coming Soon "Notify me" button
@@ -41,15 +47,25 @@ export default function ProductPage() {
       .catch(() => {})
   }, [])
 
-  // Reset transient selections whenever a different product loads
+  // Reset selections whenever a different product loads. (Size and colour used to carry over from
+  // the previous product, so you could end up ordering a size this one doesn't come in.)
+  // If there's only one size/colour there's nothing to choose, so pre-select it.
   useEffect(() => {
     setSelectedImage(0)
     setQuantity(1)
+    const sizes = (product?.sizes ?? []).filter(Boolean)
+    const colors = (product?.colors ?? []).filter(Boolean)
+    setSelectedSize(sizes.length === 1 ? sizes[0] : '')
+    setSelectedColor(colors.length === 1 ? colors[0] : '')
   }, [product?._id])
 
   const validateSelection = () => {
     if (product?.sizes?.length && !selectedSize) {
       toast.error('Please select a size', toastErrorOptions)
+      return false
+    }
+    if (product?.colors?.length && !selectedColor) {
+      toast.error('Please select a color', toastErrorOptions)
       return false
     }
     return true
@@ -376,6 +392,11 @@ function RotateViewer({
   const springY = useSpring(rotateY, { stiffness: 200, damping: 20 })
   const glareX = useTransform(springY, [-10, 10], [0, 100])
   const glareY = useTransform(springX, [-10, 10], [100, 0])
+  // (created once here — it used to be created inside the JSX, i.e. a new one on every render)
+  const glareBackground = useTransform(
+    [glareX, glareY] as any,
+    ([gx, gy]: any) => `radial-gradient(circle at ${gx}% ${gy}%, rgba(255,255,255,0.35), transparent 55%)`
+  )
 
   const handlePointerMoveTilt = (e: React.PointerEvent<HTMLDivElement>) => {
     const el = ref.current
@@ -393,6 +414,7 @@ function RotateViewer({
   }
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return // right/middle click shouldn't start a drag or open the lightbox
     ref.current?.setPointerCapture(e.pointerId)
     dragState.current = { dragging: true, startX: e.clientX, moved: 0, startIndex: selectedImage }
     setIsDragging(true)
@@ -412,10 +434,19 @@ function RotateViewer({
   }
 
   const endDrag = () => {
+    if (!dragState.current.dragging) return
     const wasClick = dragState.current.moved < 6
     dragState.current.dragging = false
     setIsDragging(false)
     if (wasClick) onOpenLightbox()
+  }
+
+  // The gesture was interrupted (the browser took over to scroll the page, or the pointer left
+  // the image) — that's not a tap, so it must not open the lightbox.
+  const cancelDrag = () => {
+    dragState.current.dragging = false
+    setIsDragging(false)
+    resetTilt()
   }
 
   const currentImg = product.images?.[selectedImage]
@@ -427,10 +458,11 @@ function RotateViewer({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={endDrag}
-        onPointerLeave={() => { dragState.current.dragging && endDrag(); resetTilt() }}
+        onPointerCancel={cancelDrag}
+        onPointerLeave={cancelDrag}
         style={{ rotateX: springX, rotateY: springY, transformStyle: 'preserve-3d' }}
         whileHover={{ scale: 1.02 }}
-        className={`aspect-square bg-[#1a1a1a] relative border border-[#2a2a2a] overflow-hidden select-none touch-none ${canRotate ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-zoom-in'}`}
+        className={`aspect-square bg-[#1a1a1a] relative border border-[#2a2a2a] overflow-hidden select-none touch-pan-y ${canRotate ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-zoom-in'}`}
       >
         <AnimatePresence mode="popLayout" initial={false}>
           {currentImg && (
@@ -457,12 +489,7 @@ function RotateViewer({
         {/* Glossy sheen that tracks the tilt for a real 3D feel */}
         <motion.div
           className="absolute inset-0 pointer-events-none mix-blend-overlay"
-          style={{
-            background: useTransform(
-              [glareX, glareY] as any,
-              ([gx, gy]: any) => `radial-gradient(circle at ${gx}% ${gy}%, rgba(255,255,255,0.35), transparent 55%)`
-            ),
-          }}
+          style={{ background: glareBackground }}
         />
 
         {canRotate ? (

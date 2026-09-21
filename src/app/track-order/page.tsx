@@ -22,6 +22,8 @@ const STATUS_COPY: Record<Order['status'], { label: string; color: string; blurb
   cancelled: { label: 'CANCELLED', color: '#ff2d2d', blurb: 'This order was cancelled.' },
 }
 
+const UNKNOWN_STATUS = { label: 'STATUS UNKNOWN', color: '#888', blurb: 'Please contact us about this order.' }
+
 export default function TrackOrderPage() {
   const [reference, setReference] = useState('')
   const [email, setEmail] = useState('')
@@ -95,15 +97,15 @@ export default function TrackOrderPage() {
         <p className="mt-6 text-[#ff2d2d] text-sm text-center border border-[#ff2d2d]/30 bg-[#ff2d2d]/5 py-3 px-4">{error}</p>
       )}
 
-      {order && (
+      {order && (() => { const status = STATUS_COPY[order.status] ?? UNKNOWN_STATUS; return (
         <div className="mt-10 border border-[#2a2a2a] p-6">
           <div className="flex items-center justify-between mb-1">
             <p className="text-xs tracking-[2px] text-[#555]">REF: <span className="text-[#c8a96e]">{order.reference}</span></p>
-            <span className="text-xs font-bebas tracking-[2px]" style={{ color: STATUS_COPY[order.status].color }}>
-              {STATUS_COPY[order.status].label}
+            <span className="text-xs font-bebas tracking-[2px]" style={{ color: status.color }}>
+              {status.label}
             </span>
           </div>
-          <p className="text-[#888] text-sm mb-6">{STATUS_COPY[order.status].blurb}</p>
+          <p className="text-[#888] text-sm mb-6">{status.blurb}</p>
 
           <div className="space-y-3 border-t border-[#2a2a2a] pt-4">
             {order.items?.map((item, i) => (
@@ -128,7 +130,7 @@ export default function TrackOrderPage() {
             </p>
           )}
         </div>
-      )}
+      ) })()}
     </div>
   )
 }

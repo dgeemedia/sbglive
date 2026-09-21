@@ -41,6 +41,7 @@ Then create an API token:
    - **Public Key** (starts with `FLWPUBK-...`)
    - **Secret Key** (starts with `FLWSECK-...`)
 5. While you're there, scroll to **Webhooks** and set a **Secret Hash** — invent any random string, save it, and copy it too (this is `FLUTTERWAVE_SECRET_HASH` below)
+6. **Client payouts:** create a **subaccount** for the client's bank account in the Flutterwave dashboard and copy its id (starts with `RS_`) — this is `FLUTTERWAVE_SUBACCOUNT_ID` below. Payments are split to it, so the client is paid directly. Checkout refuses to run without it. Test-mode and live-mode subaccounts have different ids, so use the one that matches your keys. The subaccount's default split (your commission, if any) is set on the subaccount itself in the dashboard.
 
 > Use the `FLWPUBK_TEST-...` / `FLWSECK_TEST-...` keys shown in **Test Mode** during development — no real money moves, and Flutterwave gives you test card numbers to simulate payments
 
@@ -71,11 +72,12 @@ SANITY_API_TOKEN=your_write_token
 NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY=FLWPUBK-xxxx
 FLUTTERWAVE_SECRET_KEY=FLWSECK-xxxx
 FLUTTERWAVE_SECRET_HASH=your_own_random_secret_string
+FLUTTERWAVE_SUBACCOUNT_ID=RS_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 RESEND_API_KEY=re_xxxx
-EMAIL_FROM=orders@yourdomain.com
+EMAIL_FROM=orders@sbgfashion.live
 
-NEXT_PUBLIC_BASE_URL=https://yourdomain.vercel.app
+NEXT_PUBLIC_BASE_URL=https://sbgfashion.live
 ```
 
 ---
@@ -122,16 +124,18 @@ vercel --prod
 This is **critical** — without it, orders won't be saved after payment.
 
 1. Flutterwave Dashboard → Settings → Webhooks
-2. Webhook URL: `https://yourdomain.vercel.app/api/webhook`
+2. Webhook URL: `https://sbgfashion.live/api/webhook`
 3. Secret Hash: the same random string you set in Step 2 — this must match `FLUTTERWAVE_SECRET_HASH` in your env vars exactly
 4. Events to listen for: `charge.completed`
 5. Save
+
+**How orders are recorded:** when a customer starts checkout, the order is saved in Studio as **pending** (with the items, sizes and delivery address). When Flutterwave confirms the payment, the webhook flips it to **paid** and sends the confirmation email. Pending orders that never turn paid are customers who didn't finish paying — you can safely delete them from Studio.
 
 ---
 
 ## Step 8 — Teach Your Client to Use the Admin Panel
 
-Your client logs in at: `https://yourdomain.vercel.app/studio`
+Your client logs in at: `https://sbgfashion.live/studio`
 
 **To add a product:**
 1. Click "Products" in the left sidebar

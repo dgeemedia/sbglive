@@ -8,7 +8,9 @@ export interface CheckoutProduct {
   _id: string
   name: string
   price: number
-  isSoldOut?: boolean
+  sizes?: string[] | null
+  colors?: string[] | null
+  isSoldOut?: boolean // already true when the owner unticked "In Stock" (see queries.ts)
   isComingSoon?: boolean
 }
 
@@ -70,6 +72,19 @@ export function parseCartLines(raw: unknown): { ok: true; lines: CartLine[] } | 
 const round2 = (n: number) => Math.round(n * 100) / 100
 
 /**
+ * Check the size / colour the browser sent against what the product really offers.
+ * - Nothing to choose (no options listed) -> normalised to ONE SIZE / DEFAULT.
+ * - Exactly one option -> that option (also rescues older saved carts that sent the placeholder).
+ * - Several options -> must match one of them (case-insensitive); returns the product's own spelling.
+ */
+function matchOption(options: string[] | null | undefined, sent: string, placeholder: string): string | null {
+  const list = (options ?? []).map(o => o.trim()).filter(Boolean)
+  if (list.length === 0) return placeholder
+  if (list.length === 1) return sent === placeholder || sent.toLowerCase() === list[0].toLowerCase() ? list[0] : null
+  return list.find(o => o.toLowerCase() === sent.toLowerCase()) ?? null
+}
+
+/**
  * Step 2 — price the cart from Sanity's data.
  * Rejects anything that can't be bought, and rejects the request if the amount the
  * browser showed the customer doesn't match what we calculate.
@@ -101,14 +116,33 @@ export function priceCart(
     return fail(`${sentences.join(' ')} Please remove ${count > 1 ? 'them' : 'it'} from your cart.`)
   }
 
-  // 2) build the order lines + total purely from Sanity data
+  // 2) size / colour must be something the product really comes in
+  const variants = new Map<CartLine, { size: string; color: string }>()
+  const badVariant = new Set<string>()
+  for (const l of lines) {
+    const p = byId.get(l.productId)!
+    const size = matchOption(p.sizes, l.size, 'ONE SIZE')
+    const color = matchOption(p.colors, l.color, 'DEFAULT')
+    if (size === null || color === null) badVariant.add(p.name)
+    else variants.set(l, { size, color })
+  }
+  if (badVariant.size) {
+    const n = badVariant.size
+    return fail(
+      `The size or color for ${list(badVariant)} ${verb(badVariant)} missing or no longer available. ` +
+      `Please remove ${n > 1 ? 'them' : 'it'} from your cart and add ${n > 1 ? 'them' : 'it'} again.`
+    )
+  }
+
+  // 3) build the order lines + total purely from Sanity data
   const items: PricedItem[] = lines.map(l => {
     const p = byId.get(l.productId)!
-    return { productName: p.name, productId: p._id, size: l.size, color: l.color, quantity: l.quantity, price: p.price }
+    const v = variants.get(l)!
+    return { productName: p.name, productId: p._id, size: v.size, color: v.color, quantity: l.quantity, price: p.price }
   })
   const total = round2(items.reduce((sum, i) => sum + i.price * i.quantity, 0))
 
-  // 3) the amount the customer was shown must match — otherwise prices changed (or someone tampered)
+  // 4) the amount the customer was shown must match — otherwise prices changed (or someone tampered)
   const shown = Number(clientAmount)
   if (!Number.isFinite(shown) || Math.abs(shown - total) > 0.01) {
     const latest = [...new Map(items.map(i => [i.productId, i.price])).entries()].map(([productId, price]) => ({ productId, price }))

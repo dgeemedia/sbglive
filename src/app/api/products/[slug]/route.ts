@@ -7,7 +7,11 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ): Promise<Response> {
   const { slug } = await params
-  const product = await getProductBySlug(slug)
-  if (!product) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  return NextResponse.json(product)
+  try {
+    const product = await getProductBySlug(slug)
+    if (!product) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json(product)
+  } catch {
+    return NextResponse.json({ error: 'Could not load product' }, { status: 500 })
+  }
 }

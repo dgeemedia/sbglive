@@ -1,4 +1,5 @@
 // src/hooks/useCart.ts
+import { useEffect, useState } from 'react'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CartItem } from '@/types'
@@ -56,6 +57,23 @@ export const useCart = create<CartStore>()(
       total: () => get().items.reduce((s, i) => s + i.price * i.quantity, 0),
       count: () => get().items.reduce((s, i) => s + i.quantity, 0),
     }),
-    { name: 'sbgfashion-cart' }
+    {
+      name: 'sbgfashion-cart',
+      // The saved cart is loaded in the browser AFTER the first render (see CartHydrator).
+      // Otherwise the server renders "0 items / ₦0" while the browser's first render already has
+      // the saved items, React sees two different pages, and it logs a hydration error.
+      skipHydration: true,
+    }
   )
 )
+
+/** True once the saved cart has been loaded from the browser. Use it to avoid flashing "empty cart". */
+export function useCartReady(): boolean {
+  const [ready, setReady] = useState(false)
+  useEffect(() => {
+    const unsubscribe = useCart.persist.onFinishHydration(() => setReady(true))
+    if (useCart.persist.hasHydrated()) setReady(true)
+    return unsubscribe
+  }, [])
+  return ready
+}

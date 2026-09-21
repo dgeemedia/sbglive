@@ -8,7 +8,15 @@ export default function SearchPage() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Product[]>([])
   const [all, setAll] = useState<Product[]>([])
-  useEffect(() => { fetch('/api/products').then(r=>r.json()).then(setAll) }, [])
+  const [loadFailed, setLoadFailed] = useState(false)
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/products')
+      .then(r => (r.ok ? r.json() : Promise.reject()))
+      .then(data => { if (!cancelled && Array.isArray(data)) setAll(data) })
+      .catch(() => { if (!cancelled) setLoadFailed(true) })
+    return () => { cancelled = true }
+  }, [])
   useEffect(() => {
     if (!query.trim()) { setResults([]); return }
     const q = query.toLowerCase()
@@ -19,13 +27,14 @@ export default function SearchPage() {
       <h1 className="font-bebas text-3xl tracking-[6px] mb-6">SEARCH</h1>
       <input autoFocus value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search products..."
         className="w-full bg-[#111] border border-[#2a2a2a] text-white px-4 py-4 text-lg focus:border-white focus:outline-none transition-colors placeholder-[#555] mb-8" />
+      {loadFailed && <p className="text-[#ff2d2d] text-xs tracking-[2px] mb-6">COULDN'T LOAD PRODUCTS — PLEASE REFRESH THE PAGE</p>}
       {query && <p className="text-[#888] text-xs tracking-[2px] mb-6">{results.length} RESULT{results.length!==1?'S':''} FOR "{query.toUpperCase()}"</p>}
       {results.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-px bg-[#2a2a2a]">
           {results.map(p=><ProductCard key={p._id} product={p}/>)}
         </div>
       )}
-      {query && results.length===0 && <div className="py-20 text-center text-[#555] font-bebas text-xl tracking-[4px]">NO PRODUCTS FOUND</div>}
+      {query && !loadFailed && results.length===0 && <div className="py-20 text-center text-[#555] font-bebas text-xl tracking-[4px]">NO PRODUCTS FOUND</div>}
     </div>
   )
 }

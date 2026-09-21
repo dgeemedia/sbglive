@@ -1,12 +1,20 @@
 // src/app/checkout/page.tsx
 'use client'
 import { useState } from 'react'
-import { useCart } from '@/hooks/useCart'
+import Link from 'next/link'
+import { useCart, useCartReady } from '@/hooks/useCart'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
 
+const FIELD_NAMES: Record<string, string> = {
+  firstName: 'first name', lastName: 'last name', email: 'email address', phone: 'phone number',
+  address: 'delivery address', city: 'city', state: 'state',
+}
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 export default function CheckoutPage() {
-  const { items, total, clearCart, syncPrices } = useCart()
+  const { items, total, syncPrices } = useCart()
+  const ready = useCartReady() // false until the saved cart has loaded — avoids flashing "empty"
   const [form, setForm] = useState({ firstName:'',lastName:'',email:'',phone:'',address:'',city:'',state:'' })
   const [loading, setLoading] = useState(false)
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => setForm(f=>({...f,[e.target.name]:e.target.value}))
@@ -14,8 +22,10 @@ export default function CheckoutPage() {
   const handleCheckout = async () => {
     const required = ['firstName','lastName','email','phone','address','city','state']
     for (const field of required) {
-      if (!form[field as keyof typeof form]) { toast.error(`Please fill in ${field}`); return }
+      if (!form[field as keyof typeof form].trim()) { toast.error(`Please fill in your ${FIELD_NAMES[field]}`); return }
     }
+    if (!EMAIL_RE.test(form.email.trim())) { toast.error('Please enter a valid email address'); return }
+    if (form.phone.replace(/\D/g, '').length < 10) { toast.error('Please enter a valid phone number'); return }
     if (items.length === 0) { toast.error('Your cart is empty'); return }
     setLoading(true)
     try {
@@ -26,11 +36,6 @@ export default function CheckoutPage() {
           metadata:{
             ...form,
             items:items.map(i=>({productName:i.name,productId:i._id,size:i.size,color:i.color,quantity:i.quantity,price:i.price})),
-            custom_fields:[
-              {display_name:'Customer Name',variable_name:'customer_name',value:`${form.firstName} ${form.lastName}`},
-              {display_name:'Phone',variable_name:'phone',value:form.phone},
-              {display_name:'Delivery',variable_name:'address',value:`${form.address}, ${form.city}, ${form.state}`},
-            ]
           }
         }),
       })
@@ -48,6 +53,21 @@ export default function CheckoutPage() {
 
   const ic = "w-full bg-[#111] border border-[#2a2a2a] text-white px-4 py-3 text-sm tracking-[1px] focus:border-white focus:outline-none transition-colors placeholder-[#555]"
   const lc = "block text-xs tracking-[2px] text-[#888] mb-1.5"
+
+  if (!ready) {
+    return <div className="min-h-[60vh] flex items-center justify-center font-bebas text-2xl tracking-[4px] text-[#888]">LOADING...</div>
+  }
+  if (items.length === 0) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 text-center">
+        <h1 className="font-bebas text-3xl tracking-[4px] mb-2">YOUR CART IS EMPTY</h1>
+        <p className="text-[#888] text-sm tracking-[2px] mb-8">ADD SOMETHING TO CHECK OUT</p>
+        <Link href="/" className="inline-block bg-[#ff2d2d] hover:bg-red-700 text-white px-8 py-3 font-bebas text-lg tracking-[4px] transition-colors">
+          CONTINUE SHOPPING
+        </Link>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-2 gap-10">

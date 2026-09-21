@@ -1,5 +1,6 @@
 // src/components/layout/WhatsAppButton.tsx
 import { WhatsAppGlyph } from './SocialIcons'
+import { waDigitsFromSettings } from '@/lib/phone'
 
 export default function WhatsAppButton({
   whatsappNumber,
@@ -8,10 +9,7 @@ export default function WhatsAppButton({
   whatsappNumber?: string
   phone?: string
 }) {
-  const source = whatsappNumber || phone
-  if (!source) return null
-
-  const digits = source.replace(/[^\d]/g, '')
+  const digits = waDigitsFromSettings({ whatsappNumber, phone })
   if (!digits) return null
 
   return (

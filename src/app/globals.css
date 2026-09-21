@@ -28,11 +28,30 @@ body {
   to   { transform: translateX(-50%); }
 }
 .hero-marquee-track {
-  animation: hero-marquee 32s linear infinite;
+  /* duration is set per-render from the number of cards (see HeroCarousel.tsx) */
+  animation: hero-marquee 40s linear infinite;
+  will-change: transform;
 }
 .hero-marquee-mask {
+  overflow: hidden;
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
   mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
+}
+/* Hero label text marquee (see HeroLabelMarquee.tsx) — same seamless two-copies / -50% trick */
+@keyframes label-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.label-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: label-marquee 45s linear infinite;
+  will-change: transform;
+}
+.label-marquee-mask {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
 }
 /* Coming Soon products: continuous 360° turn while hovered (desktop) / touched (mobile).
    Runs forever while the class is on; useSpin360 removes the class at the end of a turn
@@ -48,6 +67,14 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .hero-marquee-track, .ticker-inner, .spin-360 { animation: none; }
+  /* No auto-scroll for these users, so let them swipe/scroll the strip themselves
+     and drop the looping copies (otherwise items past the screen edge are unreachable). */
+  .hero-marquee-mask { overflow-x: auto; -webkit-mask-image: none; mask-image: none; }
+  .hero-marquee-track [data-dup] { display: none; }
+  /* Label: no motion, so show it once, centred, with no fade edges */
+  .label-marquee-track { animation: none; width: 100%; justify-content: center; }
+  .label-marquee-track [data-dup] { display: none; }
+  .label-marquee-mask { -webkit-mask-image: none; mask-image: none; }
 }
 
 ::-webkit-scrollbar { width: 4px; }

@@ -1,6 +1,7 @@
 // src/components/layout/Navbar.tsx
 'use client'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useCart } from '@/hooks/useCart'
 
 const links = [
@@ -18,8 +19,11 @@ export default function Navbar() {
   return (
     <nav className="bg-[#111] border-b border-[#2a2a2a] sticky top-0 z-50">
       <div className="flex items-center justify-between px-6 h-14">
-        <Link href="/" className="font-bebas text-3xl tracking-[4px] text-white">
-          SBG<span className="text-[#ff2d2d]">FASHION</span>
+        <Link href="/" className="flex items-center gap-3 font-bebas text-3xl tracking-[4px] text-white">
+          {/* Decorative (the words beside it name the brand). Hidden under 400px wide so the
+              wordmark and the cart button keep all the room they had before. */}
+          <Image src="/logo.png" alt="" width={36} height={36} className="hidden min-[400px]:block w-9 h-9 rounded-full" />
+          <span>SBG<span className="text-[#ff2d2d]">FASHION</span></span>
         </Link>
         <div className="flex items-center gap-5">
           <Link href="/search" className="text-[#888] hover:text-white text-xs tracking-[2px] transition-colors">SEARCH</Link>

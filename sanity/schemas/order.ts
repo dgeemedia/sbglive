@@ -35,6 +35,8 @@ export default defineType({
       }]
     }),
     defineField({ name: 'createdAt', title: 'Order Date', type: 'datetime' }),
+    defineField({ name: 'paidAt', title: 'Paid At', type: 'datetime', readOnly: true }),
+    defineField({ name: 'transactionId', title: 'Flutterwave Transaction ID', type: 'string', readOnly: true }),
     defineField({ name: 'notes', title: 'Notes', type: 'text' }),
   ],
   preview: {

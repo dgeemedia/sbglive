@@ -1,11 +1,22 @@
 // src/components/layout/CartDrawer.tsx
 'use client'
+import { useEffect } from 'react'
+import Link from 'next/link'
 import { useCart } from '@/hooks/useCart'
 import Image from 'next/image'
-import { urlFor } from '../../../sanity/lib/image'
+
+const MAX_QTY = 20 // same cap as the quantity picker on the product page
 
 export default function CartDrawer() {
   const { items, isOpen, closeCart, removeItem, updateQty, total, clearCart } = useCart()
+
+  // Escape closes the drawer
+  useEffect(() => {
+    if (!isOpen) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeCart() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isOpen, closeCart])
 
   return (
     <>
@@ -18,11 +29,15 @@ export default function CartDrawer() {
       )}
       {/* Drawer */}
       <div
+        role="dialog"
+        aria-label="Your cart"
+        aria-hidden={!isOpen}
+        inert={!isOpen} // the closed drawer is only slid off-screen — keep it out of the tab order
         className={`fixed top-0 right-0 w-[380px] max-w-full h-full bg-[#111] border-l border-[#2a2a2a] z-50 flex flex-col transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
         <div className="flex items-center justify-between p-5 border-b border-[#2a2a2a]">
           <h2 className="font-bebas text-xl tracking-[4px]">YOUR CART</h2>
-          <button onClick={closeCart} className="text-[#888] hover:text-white text-2xl leading-none">✕</button>
+          <button onClick={closeCart} aria-label="Close cart" className="text-[#888] hover:text-white text-2xl leading-none">✕</button>
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -44,9 +59,9 @@ export default function CartDrawer() {
                     <p className="text-[#888] text-xs mt-0.5">{item.size} / {item.color}</p>
                     <p className="text-white text-xs mt-1">₦{item.price.toLocaleString()}</p>
                     <div className="flex items-center gap-2 mt-2">
-                      <button onClick={() => updateQty(item._id, item.size, item.color, item.quantity - 1)} className="w-6 h-6 border border-[#2a2a2a] text-xs hover:border-white transition-colors">-</button>
+                      <button onClick={() => updateQty(item._id, item.size, item.color, item.quantity - 1)} aria-label="Decrease quantity" className="w-6 h-6 border border-[#2a2a2a] text-xs hover:border-white transition-colors">-</button>
                       <span className="text-xs w-4 text-center">{item.quantity}</span>
-                      <button onClick={() => updateQty(item._id, item.size, item.color, item.quantity + 1)} className="w-6 h-6 border border-[#2a2a2a] text-xs hover:border-white transition-colors">+</button>
+                      <button onClick={() => updateQty(item._id, item.size, item.color, Math.min(MAX_QTY, item.quantity + 1))} disabled={item.quantity >= MAX_QTY} aria-label="Increase quantity" className="w-6 h-6 border border-[#2a2a2a] text-xs hover:border-white transition-colors disabled:opacity-40 disabled:hover:border-[#2a2a2a]">+</button>
                       <button onClick={() => removeItem(item._id, item.size, item.color)} className="ml-auto text-[#888] hover:text-[#ff2d2d] text-xs transition-colors">REMOVE</button>
                     </div>
                   </div>
@@ -62,13 +77,13 @@ export default function CartDrawer() {
             <span className="text-white font-bebas text-base">₦{total().toLocaleString()}</span>
           </div>
           <p className="text-[10px] text-[#555] tracking-[1px]">Shipping & taxes calculated at checkout</p>
-          <a
+          <Link
             href="/checkout"
             onClick={closeCart}
             className="block w-full bg-[#ff2d2d] hover:bg-red-700 text-white text-center py-3 font-bebas text-lg tracking-[4px] transition-colors"
           >
             CHECKOUT
-          </a>
+          </Link>
           <button onClick={clearCart} className="w-full text-[#555] hover:text-[#888] text-xs tracking-[2px] transition-colors">
             CLEAR CART
           </button>

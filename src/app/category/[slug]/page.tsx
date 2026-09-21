@@ -8,12 +8,15 @@ import {
   getAllComingSoon,
   getSiteSettings,
 } from '@/lib/queries'
+import { waDigitsFromSettings } from '@/lib/phone'
 
 const CATEGORY_MAP: Record<string, { title: string; kind: 'products' | 'comingsoon'; fetch: () => Promise<any[]> }> = {
   new: { title: 'NEW RELEASE', kind: 'products', fetch: getNewReleases },
   tops: { title: 'TOPS', kind: 'products', fetch: () => getProductsByCategory('tops') },
   bottoms: { title: 'BOTTOMS', kind: 'products', fetch: () => getProductsByCategory('bottoms') },
   accessories: { title: 'ACCESSORIES', kind: 'products', fetch: () => getProductsByCategory('accessories') },
+  footwear: { title: 'FOOTWEAR', kind: 'products', fetch: () => getProductsByCategory('footwear') },
+  headwear: { title: 'HEADWEAR', kind: 'products', fetch: () => getProductsByCategory('headwear') },
   'pre-order': { title: 'PRE-ORDER', kind: 'comingsoon', fetch: getAllComingSoon },
 }
 
@@ -25,7 +28,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   if (!config) notFound()
 
   const [items, settings] = await Promise.all([config.fetch(), getSiteSettings()])
-  const waDigits = (settings?.whatsappNumber || settings?.phone || '').replace(/[^\d]/g, '')
+  const waDigits = waDigitsFromSettings(settings)
 
   return (
     <div>

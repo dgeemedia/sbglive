@@ -10,8 +10,10 @@ export async function GET(req: NextRequest): Promise<Response> {
   const transactionId = searchParams.get('transaction_id')
   const txRef = searchParams.get('tx_ref')
 
-  if (!transactionId) {
-    return NextResponse.json({ status: 'failed', error: 'Missing transaction_id' }, { status: 400 })
+  // Flutterwave transaction ids are plain numbers. Insist on that, because the id is placed
+  // into a URL that we call with our secret key.
+  if (!transactionId || !/^\d{1,20}$/.test(transactionId)) {
+    return NextResponse.json({ status: 'failed', error: 'Missing or invalid transaction_id' }, { status: 400 })
   }
 
   try {
@@ -32,7 +34,8 @@ export async function GET(req: NextRequest): Promise<Response> {
       reference: data.data?.tx_ref || txRef,
       amount: data.data?.amount,
     })
-  } catch (err: any) {
-    return NextResponse.json({ status: 'failed', error: err.message }, { status: 500 })
+  } catch (err) {
+    console.error('Payment verify failed:', err)
+    return NextResponse.json({ status: 'failed', error: 'Could not verify the payment' }, { status: 500 })
   }
 }
