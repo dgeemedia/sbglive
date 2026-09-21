@@ -1,8 +1,16 @@
 // src/app/contact/page.tsx
+import type { Metadata } from 'next'
+import { pageMeta } from '@/lib/seo'
 import { getSiteSettings } from '@/lib/queries'
 import SocialIcons from '@/components/layout/SocialIcons'
 import ContactForm from '@/components/shop/ContactForm'
 import { waDigitsFromSettings } from '@/lib/phone'
+
+export const metadata: Metadata = pageMeta({
+  title: 'Contact',
+  description: 'Contact the SBGFASHION team with questions about your order, sizing or our products.',
+  path: '/contact',
+})
 
 export default async function ContactPage() {
   const settings = await getSiteSettings()

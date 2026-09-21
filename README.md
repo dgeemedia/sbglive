@@ -129,6 +129,8 @@ This is **critical** — without it, orders won't be saved after payment.
 4. Events to listen for: `charge.completed`
 5. Save
 
+**Sharing one Flutterwave account with another app:** the Webhooks page holds a single URL and a single secret hash, so both apps use the same secret hash. This store only acts on payments it started (references starting `sbg_`) and ignores the rest. To keep the other app working, point the dashboard URL at this site and set `WEBHOOK_FORWARD_URL` to the other app's webhook URL — non-SBG events are passed on to it unchanged.
+
 **How orders are recorded:** when a customer starts checkout, the order is saved in Studio as **pending** (with the items, sizes and delivery address). When Flutterwave confirms the payment, the webhook flips it to **paid** and sends the confirmation email. Pending orders that never turn paid are customers who didn't finish paying — you can safely delete them from Studio.
 
 ---
@@ -234,3 +236,15 @@ Webhook verified against Flutterwave → Order saved to Sanity → Email sent to
 ## Support & Handoff
 
 Built with Next.js, Sanity v3, Flutterwave, Resend, Zustand, TailwindCSS, Framer Motion.
+
+## SEO
+
+Built in: unique title / description / canonical URL on every page, a real `<h1>` on each, `robots.txt`, an automatic `sitemap.xml` (built from Sanity — new products appear within the hour), product / breadcrumb / organisation structured data, share previews for WhatsApp / Instagram / Facebook, and server-rendered product pages.
+
+After deploying to `sbgfashion.live`:
+
+1. In your host, make `sbgfashion.live` the primary domain and set **301 redirects** from `www.sbgfashion.live` and the old `sbgfashion.org` to it.
+2. Add the site to [Google Search Console](https://search.google.com/search-console) (verify by DNS, or paste the token into `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`) and submit `https://sbgfashion.live/sitemap.xml`. Do the same in Bing Webmaster Tools.
+3. Paste a product URL into Google's Rich Results Test to confirm the Product data is read.
+
+Writing tips in Studio (this is what search results show): give every product a real **Description** (1–2 sentences — it becomes the search snippet), a unique name, and alt text on its photos. Categories with no products are kept out of search automatically.

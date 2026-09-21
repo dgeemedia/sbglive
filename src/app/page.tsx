@@ -3,10 +3,18 @@ import { getAllProducts, getComingSoon, getSiteSettings } from '@/lib/queries'
 import ProductGrid from '@/components/shop/ProductGrid'
 import HeroCarousel from '@/components/shop/HeroCarousel'
 import HeroLabelMarquee from '@/components/shop/HeroLabelMarquee'
+import JsonLd from '@/components/seo/JsonLd'
+import { DEFAULT_TITLE, organizationJsonLd, websiteJsonLd } from '@/lib/seo'
+import type { Metadata } from 'next'
 import ComingSoonGrid from '@/components/shop/ComingSoonGrid'
 import Image from 'next/image'
 import { urlFor } from '../../sanity/lib/image'
 import { waDigitsFromSettings } from '@/lib/phone'
+
+export const metadata: Metadata = {
+  title: { absolute: DEFAULT_TITLE },
+  alternates: { canonical: '/' },
+}
 
 export const revalidate = 60
 
@@ -25,6 +33,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <JsonLd data={[organizationJsonLd(settings), websiteJsonLd()]} />
       {/* Hero — a scrolling label strip, then the scrolling product roll */}
       <section className="bg-[#0a0a0a] pt-6 pb-6 border-b border-[#2a2a2a] relative overflow-hidden">
         {heroBg && (

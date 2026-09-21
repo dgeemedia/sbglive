@@ -28,12 +28,14 @@ export default function HeroLabelMarquee({
           >
             {Array.from({ length: LABELS_PER_COPY }, (_, i) => {
               const dup = copy === 1 || i > 0 // only the very first label is read by screen readers
+              // The first label is the page's <h1> (the homepage had none); the scrolling repeats are plain text
+              const Label = dup ? 'p' : 'h1'
               return (
                 <div key={i} className="flex shrink-0 items-center gap-8" data-dup={i > 0 ? '' : undefined} aria-hidden={dup ? true : undefined}>
-                  <p className="font-bebas text-sm tracking-[8px] text-[#888] whitespace-nowrap">
+                  <Label className="font-bebas text-sm tracking-[8px] text-[#888] whitespace-nowrap font-normal">
                     {title}
                     <span className="text-[#ff2d2d]">{highlight}</span> · {subtitle}
-                  </p>
+                  </Label>
                   <span className="h-px w-8 bg-[#2a2a2a]" />
                 </div>
               )

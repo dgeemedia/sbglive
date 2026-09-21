@@ -1,4 +1,13 @@
 // src/app/returns/page.tsx
+import type { Metadata } from 'next'
+import { pageMeta } from '@/lib/seo'
+
+export const metadata: Metadata = pageMeta({
+  title: 'Returns & Exchanges',
+  description: "SBGFASHION returns and exchanges — what to do if something isn't right with your order.",
+  path: '/returns',
+})
+
 export default function ReturnsPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-16">

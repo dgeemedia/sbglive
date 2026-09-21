@@ -1,4 +1,13 @@
 // src/app/size-guide/page.tsx
+import type { Metadata } from 'next'
+import { pageMeta } from '@/lib/seo'
+
+export const metadata: Metadata = pageMeta({
+  title: 'Size Guide',
+  description: 'Find your fit with the SBGFASHION size guide — measurements in centimetres.',
+  path: '/size-guide',
+})
+
 const APPAREL_SIZES = [
   { size: 'XS', chest: '86–91', length: '66' },
   { size: 'S', chest: '92–97', length: '68' },

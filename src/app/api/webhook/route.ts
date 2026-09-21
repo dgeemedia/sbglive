@@ -13,6 +13,32 @@ function sameSecret(a: string, b: string): boolean {
   return x.length === y.length && crypto.timingSafeEqual(x, y)
 }
 
+// A Flutterwave account has ONE webhook URL, so if another app shares the account, its payment
+// events arrive here too. This store only acts on payments it started (references beginning
+// "sbg_", see api/checkout/route.ts). Anything else is not ours: if WEBHOOK_FORWARD_URL is set we
+// pass it on untouched (same body, same verif-hash) so the other app still receives its events;
+// otherwise we just acknowledge it.
+const OUR_PREFIX = 'sbg_'
+
+async function passOn(rawBody: string, signature: string, alreadyForwarded: boolean): Promise<Response> {
+  const url = process.env.WEBHOOK_FORWARD_URL?.trim()
+  if (!url || alreadyForwarded) return received() // nowhere to send it (or it already came from a forward: never loop)
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'verif-hash': signature, 'x-sbg-forwarded': '1' },
+      body: rawBody,
+      signal: AbortSignal.timeout(20_000),
+    })
+    if (res.ok) return received()
+    console.error(`Forwarding webhook to the other app failed: HTTP ${res.status}`)
+  } catch (err) {
+    console.error('Forwarding webhook to the other app failed:', err)
+  }
+  // 502 so Flutterwave retries it later — the other app must not lose its payment notification
+  return NextResponse.json({ error: 'Could not forward webhook' }, { status: 502 })
+}
+
 export async function POST(req: NextRequest): Promise<Response> {
   const rawBody = await req.text()
 
@@ -30,6 +56,9 @@ export async function POST(req: NextRequest): Promise<Response> {
   } catch {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
   }
+
+  const ourPayment = typeof event?.data?.tx_ref === 'string' && event.data.tx_ref.startsWith(OUR_PREFIX)
+  if (!ourPayment) return passOn(rawBody, signature, req.headers.get('x-sbg-forwarded') === '1')
 
   if (event?.event !== 'charge.completed' || event?.data?.status !== 'successful') {
     return received()

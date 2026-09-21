@@ -1,5 +1,9 @@
 // src/app/category/[slug]/page.tsx
+import { cache } from 'react'
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import JsonLd from '@/components/seo/JsonLd'
+import { CATEGORY_SEO, breadcrumbJsonLd, pageMeta } from '@/lib/seo'
 import ProductGrid from '@/components/shop/ProductGrid'
 import ComingSoonGrid from '@/components/shop/ComingSoonGrid'
 import {
@@ -22,16 +26,30 @@ const CATEGORY_MAP: Record<string, { title: string; kind: 'products' | 'comingso
 
 export const revalidate = 60
 
+// generateMetadata and the page both need the items — cache() makes that one Sanity query, not two
+const loadItems = cache(async (slug: string) => CATEGORY_MAP[slug]?.fetch())
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const seo = CATEGORY_SEO[slug]
+  if (!seo || !CATEGORY_MAP[slug]) return {}
+  let items: any[] = []
+  try { items = (await loadItems(slug)) ?? [] } catch {}
+  // An empty category is a "nothing here yet" page — keep it out of search results until it has products
+  return pageMeta({ title: seo.title, description: seo.description, path: `/category/${slug}`, noindex: items.length === 0 })
+}
+
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const config = CATEGORY_MAP[slug]
   if (!config) notFound()
 
-  const [items, settings] = await Promise.all([config.fetch(), getSiteSettings()])
+  const [items, settings] = await Promise.all([loadItems(slug).then(r => r ?? []), getSiteSettings()])
   const waDigits = waDigitsFromSettings(settings)
 
   return (
     <div>
+      <JsonLd data={breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: CATEGORY_SEO[slug]?.name ?? config.title, path: `/category/${slug}` }])} />
       <div className="flex items-center gap-4 px-4 py-8">
         <h1 className="font-bebas text-2xl tracking-[6px] text-white">{config.title}</h1>
         <div className="flex-1 h-px bg-[#2a2a2a]" />

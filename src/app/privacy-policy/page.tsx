@@ -1,4 +1,13 @@
 // src/app/privacy-policy/page.tsx
+import type { Metadata } from 'next'
+import { pageMeta } from '@/lib/seo'
+
+export const metadata: Metadata = pageMeta({
+  title: 'Privacy Policy',
+  description: 'How SBGFASHION collects, uses and protects your personal information.',
+  path: '/privacy-policy',
+})
+
 export default function PrivacyPolicyPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-16">

@@ -1,4 +1,13 @@
 // src/app/terms-of-service/page.tsx
+import type { Metadata } from 'next'
+import { pageMeta } from '@/lib/seo'
+
+export const metadata: Metadata = pageMeta({
+  title: 'Terms of Service',
+  description: 'The terms that apply when you shop at SBGFASHION.',
+  path: '/terms-of-service',
+})
+
 export default function TermsOfServicePage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-16">

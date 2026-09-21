@@ -87,3 +87,10 @@ export async function getCheckoutProducts(ids: string[]): Promise<CheckoutProduc
     .withConfig({ useCdn: false })
     .fetch(`*[_type == "product" && _id in $ids]{ _id, name, price, sizes, colors, "isSoldOut": isSoldOut == true || (inStock == false && isComingSoon != true), isComingSoon }`, { ids })
 }
+
+/** Just what the sitemap needs — slug, category and when it last changed */
+export async function getSitemapProducts(): Promise<{ slug: string; category?: string; isNew?: boolean; isComingSoon?: boolean; _updatedAt: string }[]> {
+  return sanityClient.fetch(
+    `*[_type == "product" && defined(slug.current)]{ "slug": slug.current, category, isNew, isComingSoon, _updatedAt }`
+  )
+}

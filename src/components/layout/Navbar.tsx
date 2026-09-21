@@ -22,7 +22,7 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-3 font-bebas text-3xl tracking-[4px] text-white">
           {/* Decorative (the words beside it name the brand). Hidden under 400px wide so the
               wordmark and the cart button keep all the room they had before. */}
-          <Image src="/logo.png" alt="" width={36} height={36} className="hidden min-[400px]:block w-9 h-9 rounded-full" />
+          <Image src="/sbg-logo.png" alt="" width={46} height={36} className="hidden min-[400px]:block h-9 w-auto" />
           <span>SBG<span className="text-[#ff2d2d]">FASHION</span></span>
         </Link>
         <div className="flex items-center gap-5">

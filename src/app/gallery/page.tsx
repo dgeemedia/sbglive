@@ -1,8 +1,16 @@
 // src/app/gallery/page.tsx
+import type { Metadata } from 'next'
+import { pageMeta } from '@/lib/seo'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getAllProducts } from '@/lib/queries'
 import { urlFor } from '../../../sanity/lib/image'
+
+export const metadata: Metadata = pageMeta({
+  title: 'Gallery',
+  description: 'Browse the SBGFASHION gallery — streetwear pieces from Lagos.',
+  path: '/gallery',
+})
 
 export const revalidate = 60
 

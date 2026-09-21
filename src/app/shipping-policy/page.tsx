@@ -1,4 +1,13 @@
 // src/app/shipping-policy/page.tsx
+import type { Metadata } from 'next'
+import { pageMeta } from '@/lib/seo'
+
+export const metadata: Metadata = pageMeta({
+  title: 'Shipping Policy',
+  description: 'How SBGFASHION gets your order to you — delivery information for your streetwear purchase.',
+  path: '/shipping-policy',
+})
+
 export default function ShippingPolicyPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-16">
