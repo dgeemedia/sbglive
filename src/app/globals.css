@@ -56,6 +56,15 @@ body {
 /* Coming Soon products: continuous 360° turn while hovered (desktop) / touched (mobile).
    Runs forever while the class is on; useSpin360 removes the class at the end of a turn
    once the pointer has left. rotateY(360deg) lands exactly on rotateY(0), so that's seamless. */
+/* Header/footer logo: one full turn every 5 seconds, continuously. */
+@keyframes logo-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.logo-spin {
+  animation: logo-spin 5s linear infinite;
+}
+
 @keyframes spin-360 {
   from { transform: rotateY(0deg); }
   to   { transform: rotateY(360deg); }
@@ -66,7 +75,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-marquee-track, .ticker-inner, .spin-360 { animation: none; }
+  .hero-marquee-track, .ticker-inner, .spin-360, .logo-spin { animation: none; }
   /* No auto-scroll for these users, so let them swipe/scroll the strip themselves
      and drop the looping copies (otherwise items past the screen edge are unreachable). */
   .hero-marquee-mask { overflow-x: auto; -webkit-mask-image: none; mask-image: none; }

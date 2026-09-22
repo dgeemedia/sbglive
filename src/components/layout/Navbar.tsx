@@ -19,11 +19,8 @@ export default function Navbar() {
   return (
     <nav className="bg-[#111] border-b border-[#2a2a2a] sticky top-0 z-50">
       <div className="flex items-center justify-between px-6 h-14">
-        <Link href="/" className="flex items-center gap-3 font-bebas text-3xl tracking-[4px] text-white">
-          {/* Decorative (the words beside it name the brand). Hidden under 400px wide so the
-              wordmark and the cart button keep all the room they had before. */}
-          <Image src="/sbg-logo.png" alt="" width={46} height={36} className="hidden min-[400px]:block h-9 w-auto" />
-          <span>SBG<span className="text-[#ff2d2d]">FASHION</span></span>
+        <Link href="/" className="flex items-center" aria-label="SBGFASHION – Home">
+          <Image src="/sbg-logo.png" alt="SBGFASHION" width={56} height={44} className="h-10 w-auto logo-spin" priority />
         </Link>
         <div className="flex items-center gap-5">
           <Link href="/search" className="text-[#888] hover:text-white text-xs tracking-[2px] transition-colors">SEARCH</Link>
