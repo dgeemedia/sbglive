@@ -14,7 +14,9 @@ const newest = (dates: string[]) => (dates.length ? new Date(Math.max(...dates.m
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const products = await getSitemapProducts()
 
-  const entries: MetadataRoute.Sitemap = [{ url: abs('/'), lastModified: newest(products.map(p => p._updatedAt)) }]
+  const entries: MetadataRoute.Sitemap = [
+    { url: abs('/'), lastModified: newest(products.map(p => p._updatedAt)), changeFrequency: 'daily', priority: 1 },
+  ]
 
   // Category pages — only ones that actually have products (an empty page is a "nothing here yet" page)
   for (const slug of Object.keys(CATEGORY_SEO)) {
@@ -22,13 +24,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       slug === 'new' ? products.filter(p => p.isNew)
       : slug === 'pre-order' ? products.filter(p => p.isComingSoon)
       : products.filter(p => p.category === slug)
-    if (inCategory.length) entries.push({ url: abs(`/category/${slug}`), lastModified: newest(inCategory.map(p => p._updatedAt)) })
+    if (inCategory.length) {
+      entries.push({ url: abs(`/category/${slug}`), lastModified: newest(inCategory.map(p => p._updatedAt)), changeFrequency: 'daily', priority: 0.8 })
+    }
   }
 
   // No lastModified for these: we don't know when they changed, and a made-up date is worse than none
-  for (const path of STATIC_PAGES) entries.push({ url: abs(path) })
+  for (const path of STATIC_PAGES) entries.push({ url: abs(path), changeFrequency: 'monthly', priority: 0.5 })
 
-  for (const p of products) entries.push({ url: abs(`/products/${p.slug}`), lastModified: new Date(p._updatedAt) })
+  for (const p of products) entries.push({ url: abs(`/products/${p.slug}`), lastModified: new Date(p._updatedAt), changeFrequency: 'weekly', priority: 0.7 })
 
   return entries
 }

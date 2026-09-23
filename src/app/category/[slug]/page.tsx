@@ -3,7 +3,7 @@ import { cache } from 'react'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import JsonLd from '@/components/seo/JsonLd'
-import { CATEGORY_SEO, breadcrumbJsonLd, pageMeta } from '@/lib/seo'
+import { CATEGORY_SEO, breadcrumbJsonLd, itemListJsonLd, pageMeta } from '@/lib/seo'
 import ProductGrid from '@/components/shop/ProductGrid'
 import ComingSoonGrid from '@/components/shop/ComingSoonGrid'
 import {
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   let items: any[] = []
   try { items = (await loadItems(slug)) ?? [] } catch {}
   // An empty category is a "nothing here yet" page — keep it out of search results until it has products
-  return pageMeta({ title: seo.title, description: seo.description, path: `/category/${slug}`, noindex: items.length === 0 })
+  return pageMeta({ title: seo.title, description: seo.description, path: `/category/${slug}`, noindex: items.length === 0, keywords: seo.keywords })
 }
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -49,7 +49,14 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
 
   return (
     <div>
-      <JsonLd data={breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: CATEGORY_SEO[slug]?.name ?? config.title, path: `/category/${slug}` }])} />
+      <JsonLd
+        data={[
+          breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: CATEGORY_SEO[slug]?.name ?? config.title, path: `/category/${slug}` }]),
+          ...(config.kind === 'products' && items.length
+            ? [itemListJsonLd(items.map((p: any) => ({ name: p.name, slug: p.slug })))]
+            : []),
+        ]}
+      />
       <div className="flex items-center gap-4 px-4 py-8">
         <h1 className="font-bebas text-2xl tracking-[6px] text-white">{config.title}</h1>
         <div className="flex-1 h-px bg-[#2a2a2a]" />

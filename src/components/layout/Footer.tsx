@@ -12,7 +12,7 @@ export default function Footer({ settings }: { settings?: SiteSettings | null })
     <footer className="bg-[#111] border-t border-[#2a2a2a] mt-20">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8 px-6 py-12">
         <div>
-          <Image src="/sbg-logo.png" alt="SBGFASHION" width={92} height={72} className="h-16 w-auto mb-4 logo-spin" />
+          <Image src="/sbg-logo.png" alt="SBGFASHION" width={92} height={72} className="h-16 w-auto mb-4" />
           <p className="text-[#888] text-sm leading-relaxed">Lagos-based streetwear pushing the limits of fashion and culture.</p>
           {settings?.address && (
             <p className="text-[#888] text-sm leading-relaxed mt-3">{settings.address}</p>

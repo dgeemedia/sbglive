@@ -9,13 +9,14 @@ import IntroScreen from '@/components/layout/IntroScreen'
 import CartHydrator from '@/components/layout/CartHydrator'
 import { Toaster } from 'react-hot-toast'
 import { getSiteSettings } from '@/lib/queries'
-import { DEFAULT_DESCRIPTION, DEFAULT_OG_IMAGE, DEFAULT_TITLE, SITE_NAME, SITE_URL } from '@/lib/seo'
+import { DEFAULT_DESCRIPTION, DEFAULT_KEYWORDS, DEFAULT_OG_IMAGE, DEFAULT_TITLE, SITE_NAME, SITE_URL } from '@/lib/seo'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   // Pages give just their own name ("Tops"); the template adds the brand, so no page repeats it by hand.
   title: { default: DEFAULT_TITLE, template: `%s | ${SITE_NAME}` },
   description: DEFAULT_DESCRIPTION,
+  keywords: DEFAULT_KEYWORDS,
   applicationName: SITE_NAME,
   // NOTE: no canonical here on purpose — a canonical on the root layout is inherited by every page and
   // would tell Google the whole site is a copy of the homepage. Each page sets its own (see lib/seo.ts).

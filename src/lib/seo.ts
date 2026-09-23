@@ -8,9 +8,18 @@ import { toWaDigits } from './phone'
 
 export const SITE_URL = 'https://sbgfashion.live' // always the live domain — previews/localhost must not become canonical
 export const SITE_NAME = 'SBGFASHION'
-export const DEFAULT_TITLE = 'SBGFASHION – Lagos Streetwear'
+export const DEFAULT_TITLE = 'SBGFASHION – Lagos Streetwear & Fashion Clothing Store'
 export const DEFAULT_DESCRIPTION =
-  'SBGFASHION is a Lagos streetwear brand pushing the limits of fashion and culture. Shop new drops, tops, bottoms and accessories.'
+  'Shop SBGFASHION, a Lagos, Nigeria fashion and streetwear clothing store. Buy trendy tops, shirts, hoodies, bottoms, joggers, accessories and new drops online with nationwide delivery.'
+
+// Baseline keyword set for pages that don't define their own — broad fashion/clothing search terms
+// plus the brand and location, so the site shows up for generic "buy clothes" style queries too.
+export const DEFAULT_KEYWORDS = [
+  'SBGFASHION', 'SBG Fashion', 'Lagos streetwear', 'Nigerian streetwear brand',
+  'fashion store Lagos', 'clothing store Nigeria', 'buy clothes online Nigeria',
+  'trendy clothes Lagos', 'streetwear fashion', 'urban fashion Nigeria',
+  'shop tops online', 'shop bottoms online', 'fashion accessories Nigeria',
+]
 
 // 1200x630 is the size WhatsApp, Facebook, X and LinkedIn all show as a large preview card
 export const DEFAULT_OG_IMAGE = { url: '/og-default.png', width: 1200, height: 630, alt: 'SBGFASHION – Lagos streetwear' }
@@ -37,12 +46,16 @@ export function pageMeta(opts: {
   path: string
   noindex?: boolean
   image?: { url: string; width?: number; height?: number; alt?: string }
+  keywords?: string[]
 }): Metadata {
-  const { title, description, path, noindex = false, image = DEFAULT_OG_IMAGE } = opts
+  const { title, description, path, noindex = false, image = DEFAULT_OG_IMAGE, keywords } = opts
   const fullTitle = `${title} | ${SITE_NAME}`
+  // Merge page-specific keywords (put first, they're more relevant) with the site-wide fashion/clothing set.
+  const mergedKeywords = Array.from(new Set([...(keywords ?? []), ...DEFAULT_KEYWORDS]))
   return {
     title,
     description,
+    keywords: mergedKeywords,
     alternates: { canonical: path },
     openGraph: { title: fullTitle, description, url: path, siteName: SITE_NAME, type: 'website', locale: 'en_NG', images: [image] },
     twitter: { card: 'summary_large_image', title: fullTitle, description, images: [image.url] },
@@ -51,14 +64,51 @@ export function pageMeta(opts: {
 }
 
 // ---------------------------------------------------------------- categories
-export const CATEGORY_SEO: Record<string, { name: string; title: string; description: string }> = {
-  new: { name: 'New Releases', title: 'New Releases – Lagos Streetwear', description: 'The latest SBGFASHION drops. Shop new releases from the Lagos streetwear brand.' },
-  tops: { name: 'Tops', title: 'Tops – Lagos Streetwear', description: 'Shop tops from SBGFASHION, the Lagos streetwear brand.' },
-  bottoms: { name: 'Bottoms', title: 'Bottoms – Lagos Streetwear', description: 'Shop bottoms from SBGFASHION, the Lagos streetwear brand.' },
-  accessories: { name: 'Accessories', title: 'Accessories – Lagos Streetwear', description: 'Shop accessories from SBGFASHION, the Lagos streetwear brand.' },
-  footwear: { name: 'Footwear', title: 'Footwear – Lagos Streetwear', description: 'Shop footwear from SBGFASHION, the Lagos streetwear brand.' },
-  headwear: { name: 'Headwear', title: 'Headwear – Lagos Streetwear', description: 'Shop headwear from SBGFASHION, the Lagos streetwear brand.' },
-  'pre-order': { name: 'Pre-Order & Coming Soon', title: 'Coming Soon & Pre-Order', description: "Upcoming SBGFASHION drops. See what's landing next and get notified when it's here." },
+// Descriptions spell out the actual garment types people search for (t-shirts, hoodies, jeans, etc.)
+// rather than just the category label — that's what matches real fashion/clothing search queries.
+export const CATEGORY_SEO: Record<string, { name: string; title: string; description: string; keywords: string[] }> = {
+  new: {
+    name: 'New Releases',
+    title: 'New Fashion Drops – Lagos Streetwear',
+    description: 'The latest SBGFASHION drops. Shop new streetwear and fashion releases — fresh tops, bottoms and accessories from the Lagos clothing brand.',
+    keywords: ['new fashion drops Lagos', 'latest streetwear release', 'new clothes Nigeria', 'new arrivals fashion'],
+  },
+  tops: {
+    name: 'Tops',
+    title: 'Tops, T-Shirts & Hoodies – Lagos Streetwear',
+    description: 'Shop tops, t-shirts, shirts and hoodies from SBGFASHION, the Lagos streetwear and fashion clothing brand.',
+    keywords: ['buy tops online Nigeria', 't-shirts Lagos', 'hoodies Nigeria', 'shirts online', 'streetwear tops'],
+  },
+  bottoms: {
+    name: 'Bottoms',
+    title: 'Bottoms, Joggers & Trousers – Lagos Streetwear',
+    description: 'Shop bottoms, joggers, trousers and shorts from SBGFASHION, the Lagos streetwear and fashion clothing brand.',
+    keywords: ['buy joggers online Nigeria', 'trousers Lagos', 'shorts online', 'streetwear bottoms', 'jeans Nigeria'],
+  },
+  accessories: {
+    name: 'Accessories',
+    title: 'Fashion Accessories – Lagos Streetwear',
+    description: 'Shop fashion accessories — bags, caps, belts and jewelry — from SBGFASHION, the Lagos streetwear and clothing brand.',
+    keywords: ['fashion accessories Nigeria', 'caps and bags Lagos', 'streetwear accessories', 'buy accessories online'],
+  },
+  footwear: {
+    name: 'Footwear',
+    title: 'Footwear & Sneakers – Lagos Streetwear',
+    description: 'Shop footwear and sneakers from SBGFASHION, the Lagos streetwear and fashion clothing brand.',
+    keywords: ['sneakers Nigeria', 'buy shoes online Lagos', 'streetwear footwear', 'fashion shoes'],
+  },
+  headwear: {
+    name: 'Headwear',
+    title: 'Headwear & Caps – Lagos Streetwear',
+    description: 'Shop headwear, caps and beanies from SBGFASHION, the Lagos streetwear and fashion clothing brand.',
+    keywords: ['caps Nigeria', 'beanies Lagos', 'streetwear headwear', 'fashion caps online'],
+  },
+  'pre-order': {
+    name: 'Pre-Order & Coming Soon',
+    title: 'Coming Soon & Pre-Order Fashion Drops',
+    description: "Upcoming SBGFASHION clothing drops. See what's landing next in fashion, streetwear and accessories, and get notified when it's here.",
+    keywords: ['coming soon fashion Lagos', 'pre-order streetwear', 'upcoming clothing drop Nigeria'],
+  },
 }
 
 // ---------------------------------------------------------------- JSON-LD
@@ -87,14 +137,35 @@ export function organizationJsonLd(settings?: SiteSettings | null) {
   const digits = toWaDigits(settings?.phone) || toWaDigits(settings?.whatsappNumber)
   return {
     '@context': 'https://schema.org',
-    '@type': 'Organization',
+    // ClothingStore (a more specific LocalBusiness subtype than plain Organization) tells Google this
+    // is a clothing retailer, which is what surfaces a business for local "fashion store near me" /
+    // "clothing store Lagos" searches rather than just brand-name lookups.
+    '@type': 'ClothingStore',
     name: SITE_NAME,
+    alternateName: 'SBG Fashion',
     url: SITE_URL,
     logo: abs('/logo.png'),
+    image: abs('/og-default.png'),
     description: DEFAULT_DESCRIPTION,
+    priceRange: '$$',
     address: { '@type': 'PostalAddress', addressLocality: 'Lagos', addressCountry: 'NG' },
+    areaServed: { '@type': 'Country', name: 'Nigeria' },
     ...(sameAs.length && { sameAs }),
     ...(digits.length >= 10 && { contactPoint: { '@type': 'ContactPoint', telephone: `+${digits}`, contactType: 'customer service', areaServed: 'NG', availableLanguage: 'English' } }),
+  }
+}
+
+/** ItemList structured data for a category listing page — helps the listing earn a rich "carousel" result. */
+export function itemListJsonLd(items: { name: string; slug: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: items.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: abs(`/products/${item.slug}`),
+      name: item.name,
+    })),
   }
 }
 

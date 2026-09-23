@@ -16,11 +16,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   const description = truncate(product.description) || `${product.name} — ₦${product.price.toLocaleString('en-NG')}. Lagos streetwear from SBGFASHION.`
   const first = product.images?.[0]
+  const categorySeo = CATEGORY_SEO[product.category]
+  // Product name + its category's search terms (e.g. "t-shirts Lagos") so the page ranks for both
+  // the specific item and the broader fashion/clothing searches it belongs to.
+  const keywords = [product.name, ...(categorySeo ? [categorySeo.name, ...categorySeo.keywords] : [])]
   // No photo yet? Fall back to the default share image rather than sending no preview at all
   return pageMeta({
     title: product.name,
     description,
     path: `/products/${slug}`,
+    keywords,
     ...(first && { image: { url: urlFor(first).width(1200).height(630).fit('crop').url(), width: 1200, height: 630, alt: first.alt || product.name } }),
   })
 }
