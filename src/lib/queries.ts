@@ -12,7 +12,10 @@ import type { Product, SiteSettings } from '@/types'
 import type { CheckoutProduct } from '@/lib/checkout'
 
 export async function getSiteSettings(): Promise<SiteSettings | null> {
-  return sanityClient.fetch(
+  // useCdn: false — this is a tiny, low-traffic document, so there's no real cost to skipping
+  // Sanity's CDN, and it removes a second caching layer that was adding its own delay on top of
+  // Next's ISR window.
+  return sanityClient.withConfig({ useCdn: false }).fetch(
     `*[_type == "siteSettings"][0]{
       introVideo{ asset->{ url } },
       heroTitle,
