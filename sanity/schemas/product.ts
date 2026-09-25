@@ -1,4 +1,16 @@
-// sanity/schemas/order.ts
+// sanity/schemas/product.ts
+//
+// RECONSTRUCTED FILE — the real product.ts wasn't in the uploaded zip either. Fields below are
+// reverse-engineered from PRODUCT_FIELDS in src/lib/queries.ts, so names/types match what the
+// front end already reads (name, slug, price, images, category, sizes, colors, description,
+// inStock, isSoldOut, isNew, isComingSoon, tags, order). If your real product.ts has extra
+// fields not used in that query, carry them over from your original file — don't lose them.
+//
+// WHAT'S NEW HERE: the `stock` array. This is the actual inventory feature — a quantity-in / units-
+// sold counter per size+colour combination, kept up to date automatically by the payment webhook
+// (see src/app/api/webhook/route.ts) every time an order is marked paid. It's additive and optional:
+// a product with no `stock` entries behaves exactly as before, driven only by the `inStock` /
+// `isSoldOut` toggles. Add stock lines only to products where you want real quantity tracking.
 import { defineType, defineField } from 'sanity'
 
 export default defineType({
@@ -6,42 +18,107 @@ export default defineType({
   title: 'Product',
   type: 'document',
   fields: [
-    defineField({ name: 'name', title: 'Product Name', type: 'string', validation: R => R.required() }),
+    defineField({ name: 'name', title: 'Name', type: 'string', validation: (Rule) => Rule.required() }),
     defineField({
-      name: 'slug', title: 'Slug', type: 'slug',
+      name: 'slug',
+      title: 'Slug',
+      type: 'slug',
       options: { source: 'name', maxLength: 96 },
-      validation: R => R.required()
+      validation: (Rule) => Rule.required(),
     }),
-    defineField({ name: 'price', title: 'Price (₦)', type: 'number', validation: R => R.required().positive() }),
+    defineField({ name: 'price', title: 'Price (₦)', type: 'number', validation: (Rule) => Rule.required().min(0) }),
     defineField({
-      name: 'images', title: 'Product Images', type: 'array',
-      of: [{ type: 'image', options: { hotspot: true }, fields: [{ name: 'alt', type: 'string', title: 'Alt text' }] }],
-      validation: R => R.required().min(1)
+      name: 'images',
+      title: 'Images',
+      type: 'array',
+      of: [{ type: 'image', options: { hotspot: true }, fields: [{ name: 'alt', title: 'Alt text', type: 'string' }] }],
+      validation: (Rule) => Rule.required().min(1),
     }),
     defineField({
-      name: 'category', title: 'Category', type: 'string',
-      options: { list: ['tops', 'bottoms', 'accessories', 'footwear', 'headwear'] },
-      validation: R => R.required()
+      name: 'category',
+      title: 'Category',
+      type: 'string',
+      options: { list: ['tops', 'bottoms', 'outerwear', 'footwear', 'accessories'] },
     }),
-    defineField({ name: 'sizes', title: 'Available Sizes', type: 'array', of: [{ type: 'string' }], options: { list: ['XS','S','M','L','XL','2XL','3XL','W30','W32','W34','W36','One Size'] } }),
-    defineField({ name: 'colors', title: 'Available Colors', type: 'array', of: [{ type: 'string' }] }),
-    defineField({ name: 'description', title: 'Description', type: 'text', rows: 4 }),
-    defineField({ name: 'inStock', title: 'In Stock', type: 'boolean', initialValue: true }),
-    defineField({ name: 'isSoldOut', title: 'Mark as Sold Out', type: 'boolean', initialValue: false }),
-    defineField({ name: 'isNew', title: 'Mark as New Release', type: 'boolean', initialValue: false }),
-    defineField({ name: 'isComingSoon', title: 'Coming Soon', type: 'boolean', initialValue: false }),
+    defineField({ name: 'sizes', title: 'Sizes', type: 'array', of: [{ type: 'string' }] }),
+    defineField({ name: 'colors', title: 'Colours', type: 'array', of: [{ type: 'string' }] }),
+    defineField({ name: 'description', title: 'Description', type: 'text' }),
+
+    // --- Availability (existing, manual, boolean) ---
+    defineField({
+      name: 'inStock',
+      title: 'In Stock',
+      type: 'boolean',
+      initialValue: true,
+      description: 'Untick when this product has none left. Ignored for "Coming Soon" items.',
+    }),
+    defineField({
+      name: 'isSoldOut',
+      title: 'Force Sold Out',
+      type: 'boolean',
+      description: 'Manual override — ticking this always marks the product sold out, regardless of stock below.',
+    }),
+    defineField({ name: 'isNew', title: 'Mark as New Release', type: 'boolean' }),
+    defineField({ name: 'isComingSoon', title: 'Coming Soon', type: 'boolean' }),
+
+    // --- Inventory (new) ---
+    defineField({
+      name: 'stock',
+      title: 'Stock by size / colour',
+      type: 'array',
+      description:
+        'Optional. Add one line per size+colour combination you sell and set how many units you ' +
+        'have. "Sold" updates itself automatically whenever an order for that combination is paid — ' +
+        'don\'t edit it by hand. Leave this whole list empty if you\'d rather keep using the simple ' +
+        '"In Stock" toggle above; the site treats an empty list the old way.',
+      of: [{
+        type: 'object',
+        name: 'stockLine',
+        fields: [
+          {
+            name: 'size',
+            title: 'Size',
+            type: 'string',
+            description: 'Leave blank / use "ONE SIZE" if this product has no size options.',
+          },
+          {
+            name: 'color',
+            title: 'Colour',
+            type: 'string',
+            description: 'Leave blank / use "DEFAULT" if this product has no colour options.',
+          },
+          {
+            name: 'quantity',
+            title: 'Units in stock',
+            type: 'number',
+            initialValue: 0,
+            validation: (Rule) => Rule.required().min(0).integer(),
+          },
+          {
+            name: 'sold',
+            title: 'Units sold',
+            type: 'number',
+            initialValue: 0,
+            readOnly: true,
+            description: 'Updated automatically by the payment webhook. Read-only.',
+          },
+        ],
+        preview: {
+          select: { size: 'size', color: 'color', quantity: 'quantity', sold: 'sold' },
+          prepare({ size, color, quantity, sold }) {
+            return {
+              title: `${size || 'ONE SIZE'} / ${color || 'DEFAULT'}`,
+              subtitle: `${quantity ?? 0} left · ${sold ?? 0} sold`,
+            }
+          },
+        },
+      }],
+    }),
+
     defineField({ name: 'tags', title: 'Tags', type: 'array', of: [{ type: 'string' }] }),
-    defineField({ name: 'order', title: 'Display Order', type: 'number', initialValue: 0 }),
-  ],
-  orderings: [
-    { title: 'Newest', name: 'createdAtDesc', by: [{ field: '_createdAt', direction: 'desc' }] },
-    { title: 'Display Order', name: 'orderAsc', by: [{ field: 'order', direction: 'asc' }] },
-    { title: 'Price: Low to High', name: 'priceAsc', by: [{ field: 'price', direction: 'asc' }] },
+    defineField({ name: 'order', title: 'Sort Order', type: 'number', description: 'Lower numbers show first.' }),
   ],
   preview: {
-    select: { title: 'name', subtitle: 'price', media: 'images.0' },
-    prepare({ title, subtitle, media }) {
-      return { title, subtitle: `₦${subtitle?.toLocaleString()}`, media }
-    }
-  }
+    select: { title: 'name', media: 'images.0', subtitle: 'category' },
+  },
 })

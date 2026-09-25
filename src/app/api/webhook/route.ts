@@ -1,4 +1,14 @@
 // src/app/api/webhook/route.ts
+//
+// CHANGE: added decrementStockForOrder(), called once right after an order is confirmed paid.
+// For every line item, it finds the matching size/colour stock line on that product (see
+// product.ts's new `stock` array) and subtracts the quantity sold, adding it to that line's
+// running `sold` count. Products that don't use the stock array are left untouched — this is
+// additive, not a requirement.
+//
+// This only runs inside the branch that already guards against double-processing (the order must
+// have just transitioned pending -> paid via the ifRevisionId-guarded patch below), so a webhook
+// retry can never decrement stock twice for the same order.
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { sanityWriteClient } from '../../../../sanity/lib/client'
@@ -37,6 +47,59 @@ async function passOn(rawBody: string, signature: string, alreadyForwarded: bool
   }
   // 502 so Flutterwave retries it later — the other app must not lose its payment notification
   return NextResponse.json({ error: 'Could not forward webhook' }, { status: 502 })
+}
+
+const norm = (v: string | null | undefined, placeholder: string) => {
+  const t = (v ?? '').trim()
+  return t ? t.toLowerCase() : placeholder.toLowerCase()
+}
+
+/**
+ * Subtract each paid line item's quantity from the matching size/colour stock line on its
+ * product, and add it to that line's `sold` count. Silently skips products that aren't using
+ * the `stock` array (see product.ts) and skips/logs a line that has no matching size/colour —
+ * inventory bookkeeping must never fail the webhook or block the order/email.
+ */
+async function decrementStockForOrder(
+  items: { productId?: string; size?: string; color?: string; quantity?: number }[]
+): Promise<void> {
+  const byProduct = new Map<string, typeof items>()
+  for (const item of items) {
+    if (!item.productId || !item.quantity) continue
+    byProduct.set(item.productId, [...(byProduct.get(item.productId) ?? []), item])
+  }
+
+  for (const [productId, productItems] of byProduct) {
+    try {
+      const product: any = await sanityWriteClient.getDocument(productId)
+      const stock: any[] = Array.isArray(product?.stock) ? product.stock : []
+      if (stock.length === 0) continue // this product isn't using per-variant stock tracking
+
+      const patch: Record<string, number> = {}
+      for (const item of productItems) {
+        const wantSize = norm(item.size, 'ONE SIZE')
+        const wantColor = norm(item.color, 'DEFAULT')
+        const line = stock.find((s) => norm(s.size, 'ONE SIZE') === wantSize && norm(s.color, 'DEFAULT') === wantColor)
+        if (!line?._key) {
+          console.error(
+            `Order paid for a stock-tracked product but no matching size/colour line found: ` +
+            `product ${productId}, size "${item.size}", colour "${item.color}". Stock not adjusted for this line.`
+          )
+          continue
+        }
+        const qty = item.quantity ?? 0
+        patch[`stock[_key=="${line._key}"].quantity`] = Math.max(0, (line.quantity ?? 0) - qty)
+        patch[`stock[_key=="${line._key}"].sold`] = (line.sold ?? 0) + qty
+      }
+
+      if (Object.keys(patch).length > 0) {
+        await sanityWriteClient.patch(productId).set(patch).commit()
+      }
+    } catch (err) {
+      // Never fail the webhook over inventory bookkeeping — the payment/order record must still succeed.
+      console.error(`Could not update stock for product ${productId}:`, err)
+    }
+  }
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
@@ -140,6 +203,14 @@ export async function POST(req: NextRequest): Promise<Response> {
     } catch (err: any) {
       if (err?.statusCode === 409) return received() // the other request won
       throw err
+    }
+
+    // We just (and only just) flipped this order to paid — safe to decrement stock exactly once.
+    // Inventory bookkeeping must never take down the webhook, so this is a hard try/catch.
+    try {
+      await decrementStockForOrder(order.items || [])
+    } catch (err) {
+      console.error(`Order ${tx_ref} marked paid, but stock update failed:`, err)
     }
 
     // The order is safely recorded. An email problem must not fail the webhook (Flutterwave

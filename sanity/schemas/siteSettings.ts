@@ -1,97 +1,73 @@
 // sanity/schemas/siteSettings.ts
-export default {
+//
+// RECONSTRUCTED FILE — no siteSettings schema was present anywhere in the uploaded zip, yet
+// src/lib/queries.ts queries `*[_type == "siteSettings"]` and src/app/layout.tsx reads
+// introVideo / heroTitle / heroHighlight / heroSubtitle / heroBackgroundImage / address / phone /
+// whatsappNumber / socialLinks from it. Field names below match those call sites exactly.
+//
+// THE VIDEO FIX: the front end does
+//     introVideo{ asset->{ url } }                       (queries.ts)
+//     videoUrl={settings?.introVideo?.asset?.url}         (layout.tsx)
+// That only resolves if `introVideo` is a Sanity `file` field (it has an `asset` reference to
+// dereference). If your live schema currently has this field as a plain string/URL, or as some
+// other type, the query silently returns nothing and the front end falls back to the bundled
+// /videos/intro.mp4 — which looks exactly like "my upload never takes effect." Replace whatever
+// you have with the `introVideo` field defined here, restart Studio, and re-upload the video
+// through Studio (a schema type change does not retroactively fix an already-saved value of the
+// wrong shape — the asset needs to be re-uploaded into the corrected field once the type matches).
+import { defineType, defineField } from 'sanity'
+
+export default defineType({
   name: 'siteSettings',
   title: 'Site Settings',
   type: 'document',
-  // This is a singleton — only one document of this type should ever exist.
-  // The Studio structure (sanity.config.ts) locks editors into that one document.
+  // Singleton: only one of these should ever exist. Enforce that in your Studio structure
+  // (sanity.config.ts) by routing straight to the single document instead of a list.
   fields: [
-    {
+    defineField({
       name: 'introVideo',
-      title: 'Intro Video',
+      title: 'Intro Screen Background Video',
       type: 'file',
-      options: { accept: 'video/mp4' },
-      description: 'The background video on the "Press Start" splash screen. Leave empty to use the default built-in video. Keep file size small (a few MB) since it autoplays on page load.',
-    },
-    {
-      name: 'heroTitle',
-      title: 'Hero Title',
-      type: 'string',
-      description: 'Main hero heading, e.g. "SBG"',
-    },
-    {
-      name: 'heroHighlight',
-      title: 'Hero Highlight',
-      type: 'string',
-      description: 'The accent-colored part of the heading, e.g. "live"',
-    },
-    {
-      name: 'heroSubtitle',
-      title: 'Hero Subtitle',
-      type: 'string',
-      description: 'Small tagline under the heading, e.g. "LAGOS • ALL PRODUCTS"',
-    },
-    {
-      name: 'heroBackgroundImage',
-      title: 'Hero Background Image',
-      type: 'image',
-      options: { hotspot: true },
-      description: 'Optional. If left empty, the default dark background is used.',
-    },
-    {
-      name: 'address',
-      title: 'Address',
-      type: 'text',
-      rows: 2,
-    },
-    {
-      name: 'phone',
-      title: 'Phone Number',
-      type: 'string',
-      description: 'Displayed phone number, e.g. +234 801 234 5678',
-    },
-    {
+      description:
+        'The looping background video on the "PRESS START" intro screen. Upload an MP4. ' +
+        'If this is left empty, the site falls back to a bundled default video.',
+      options: { accept: 'video/*' },
+    }),
+    defineField({ name: 'heroTitle', title: 'Hero Title', type: 'string' }),
+    defineField({ name: 'heroHighlight', title: 'Hero Highlight Word', type: 'string' }),
+    defineField({ name: 'heroSubtitle', title: 'Hero Subtitle', type: 'text' }),
+    defineField({ name: 'heroBackgroundImage', title: 'Hero Background Image', type: 'image', options: { hotspot: true } }),
+    defineField({ name: 'address', title: 'Store Address', type: 'text' }),
+    defineField({ name: 'phone', title: 'Phone Number', type: 'string' }),
+    defineField({
       name: 'whatsappNumber',
       title: 'WhatsApp Number',
       type: 'string',
-      description: 'Digits only with country code, no + or spaces, e.g. 2348012345678. Used for the WhatsApp chat button.',
-    },
-    {
+      description: 'Used for the WhatsApp button/link if different from the main phone number.',
+    }),
+    defineField({
       name: 'socialLinks',
       title: 'Social Links',
       type: 'array',
-      of: [
-        {
-          type: 'object',
-          name: 'socialLink',
-          fields: [
-            {
-              name: 'platform',
-              title: 'Platform',
-              type: 'string',
-              options: {
-                list: [
-                  { title: 'Instagram', value: 'instagram' },
-                  { title: 'TikTok', value: 'tiktok' },
-                  { title: 'Twitter / X', value: 'twitter' },
-                  { title: 'Snapchat', value: 'snapchat' },
-                  { title: 'Facebook', value: 'facebook' },
-                  { title: 'YouTube', value: 'youtube' },
-                  { title: 'LinkedIn', value: 'linkedin' },
-                ],
-              },
-            },
-            {
-              name: 'url',
-              title: 'URL',
-              type: 'url',
-            },
-          ],
-          preview: {
-            select: { title: 'platform', subtitle: 'url' },
+      of: [{
+        type: 'object',
+        name: 'socialLink',
+        fields: [
+          {
+            name: 'platform',
+            title: 'Platform',
+            type: 'string',
+            options: { list: ['instagram', 'tiktok', 'facebook', 'x', 'youtube', 'whatsapp'] },
           },
-        },
-      ],
-    },
+          { name: 'url', title: 'URL', type: 'url' },
+        ],
+        preview: { select: { title: 'platform', subtitle: 'url' } },
+      }],
+    }),
   ],
-}
+  preview: {
+    prepare() {
+      return { title: 'Site Settings' }
+    },
+  },
+})

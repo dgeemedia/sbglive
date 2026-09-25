@@ -3,6 +3,17 @@
 // (product ids, sizes, colours, quantities) but never what things COST — prices,
 // names and availability always come from Sanity, and the amount we charge is
 // computed here. Pure functions on purpose (no Sanity / network) so they're easy to test.
+//
+// CHANGE: CheckoutProduct now carries `stock`, and priceCart has a new step (2.5) that rejects
+// an order when the quantity requested exceeds what's actually left for that size/colour. Products
+// that don't use the stock array (see product.ts) are untouched — this only kicks in when `stock`
+// has entries.
+
+export interface StockLine {
+  size?: string | null
+  color?: string | null
+  quantity?: number | null
+}
 
 export interface CheckoutProduct {
   _id: string
@@ -12,6 +23,7 @@ export interface CheckoutProduct {
   colors?: string[] | null
   isSoldOut?: boolean // already true when the owner unticked "In Stock" (not for Coming Soon items — see queries.ts)
   isComingSoon?: boolean
+  stock?: StockLine[] | null
 }
 
 export interface CartLine {
@@ -84,6 +96,25 @@ function matchOption(options: string[] | null | undefined, sent: string, placeho
   return list.find(o => o.toLowerCase() === sent.toLowerCase()) ?? null
 }
 
+const norm = (v: string | null | undefined, placeholder: string) => {
+  const t = (v ?? '').trim()
+  return t ? t.toLowerCase() : placeholder.toLowerCase()
+}
+
+/**
+ * Units left for one size/colour combination.
+ * Returns `null` when the product isn't using per-variant stock tracking at all (empty/absent
+ * `stock` array) — callers should treat `null` as "not tracked, don't block the order on it".
+ * Returns a number (possibly 0) when it IS tracked but no line matches, treated as 0 remaining.
+ */
+function remainingFor(stock: StockLine[] | null | undefined, size: string, color: string): number | null {
+  if (!stock || stock.length === 0) return null
+  const line = stock.find(
+    (s) => norm(s.size, 'ONE SIZE') === norm(size, 'ONE SIZE') && norm(s.color, 'DEFAULT') === norm(color, 'DEFAULT')
+  )
+  return Math.max(0, line?.quantity ?? 0)
+}
+
 /**
  * Step 2 — price the cart from Sanity's data.
  * Rejects anything that can't be bought, and rejects the request if the amount the
@@ -132,6 +163,27 @@ export function priceCart(
       `The size or color for ${list(badVariant)} ${verb(badVariant)} missing or no longer available. ` +
       `Please remove ${n > 1 ? 'them' : 'it'} from your cart and add ${n > 1 ? 'them' : 'it'} again.`
     )
+  }
+
+  // 2.5) requested quantity must not exceed real remaining stock, for products that track it
+  const insufficient: string[] = []
+  for (const l of lines) {
+    const p = byId.get(l.productId)!
+    const v = variants.get(l)!
+    const remaining = remainingFor(p.stock, v.size, v.color)
+    if (remaining !== null && l.quantity > remaining) {
+      const variantLabel = [v.size !== 'ONE SIZE' ? v.size : null, v.color !== 'DEFAULT' ? v.color : null]
+        .filter(Boolean)
+        .join(' / ')
+      insufficient.push(
+        remaining === 0
+          ? `${p.name}${variantLabel ? ` (${variantLabel})` : ''} just sold out.`
+          : `Only ${remaining} left of ${p.name}${variantLabel ? ` (${variantLabel})` : ''} — you asked for ${l.quantity}.`
+      )
+    }
+  }
+  if (insufficient.length) {
+    return fail(`${insufficient.join(' ')} Please update your cart and try again.`)
   }
 
   // 3) build the order lines + total purely from Sanity data
